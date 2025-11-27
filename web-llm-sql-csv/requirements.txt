@@ -1,5 +1,0 @@
-flask
-google-generativeai
-sqlalchemy
-pymssql
-python-dotenv
