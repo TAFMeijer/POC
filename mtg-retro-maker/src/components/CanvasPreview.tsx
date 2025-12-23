@@ -10,6 +10,12 @@ interface CanvasPreviewProps {
     frameRareSource: HTMLImageElement | null;
     frameMythicSource: HTMLImageElement | null;
     symbolImgs: Record<string, HTMLImageElement | null>;
+    raritySymbols: {
+        common: HTMLImageElement | null;
+        uncommon: HTMLImageElement | null;
+        rare: HTMLImageElement | null;
+        mythic: HTMLImageElement | null;
+    };
     title: string;
     manaCost: string;
     typeLine: string;

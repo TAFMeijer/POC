@@ -12,6 +12,7 @@ import {
     DISCLAIMER,
     PARAGRAPH_GAP_PX,
     SYMBOL_CODES,
+    RARITY_SYMBOL,
 } from "../constants/layout";
 import {
     polarOffset,
@@ -36,6 +37,12 @@ interface CanvasDrawerProps {
     rules: string;
     pt: string;
     rarity: string;
+    raritySymbols: {
+        common: HTMLImageElement | null;
+        uncommon: HTMLImageElement | null;
+        rare: HTMLImageElement | null;
+        mythic: HTMLImageElement | null;
+    };
     setDiag: (diag: { tests: any[]; symbolCount: number }) => void;
     fontVersion: number;
 }
@@ -55,6 +62,7 @@ export function useCanvasDrawer({
     rules,
     pt,
     rarity,
+    raritySymbols,
     setDiag,
     fontVersion,
 }: CanvasDrawerProps) {
@@ -146,6 +154,24 @@ export function useCanvasDrawer({
                     ART_RECT.w,
                     ART_RECT.h
                 );
+
+            // Rarity Symbol
+            const normRarity = normalizeRarity(rarity);
+            let rarityIcon = raritySymbols.common;
+            if (normRarity === "Mythic") rarityIcon = raritySymbols.mythic;
+            else if (normRarity === "Rare") rarityIcon = raritySymbols.rare;
+            else if (normRarity === "Uncommon") rarityIcon = raritySymbols.uncommon;
+            else if (normRarity === "Common") rarityIcon = raritySymbols.common;
+
+            if (rarityIcon) {
+                ctx.drawImage(
+                    rarityIcon,
+                    RARITY_SYMBOL.x,
+                    RARITY_SYMBOL.y,
+                    RARITY_SYMBOL.w,
+                    RARITY_SYMBOL.h
+                );
+            }
 
             // Placeholder if no assets
             if (!activeFrame && !artSource) {
@@ -493,7 +519,8 @@ export function useCanvasDrawer({
             ctx.save();
             ctx.font = `${DISCLAIMER.size}px "Elegant Garamond", "EB Garamond", Garamond, serif`;
             ctx.textBaseline = "top";
-            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            //ctx.fillStyle = "rgba(255, 255, 255, 0.5)";//White for Artifact
+            ctx.fillStyle = "rgba(0,0,0,0.5)";//Black for White
             ctx.fillText(
                 disc,
                 DISCLAIMER.x + discShadow.x,
@@ -548,6 +575,7 @@ export function useCanvasDrawer({
         pt,
 
         rarity,
+        raritySymbols,
         symbolImgs,
         runtimeTests,
         setDiag,

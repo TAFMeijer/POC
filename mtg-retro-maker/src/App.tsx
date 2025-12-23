@@ -6,7 +6,7 @@ import { normalizeRarity } from "./utils/dataUtils";
 
 function App() {
   // Load static assets on mount
-  const { frames, symbols, fontsLoaded, loading } = useStaticAssets();
+  const { frames, symbols, raritySymbols, fontsLoaded, loading } = useStaticAssets();
 
   // State
   const [cards, setCards] = useState<Record<string, any>>({});
@@ -14,6 +14,7 @@ function App() {
 
   // Derived state for current card
   const currentCard = cards[selectedCardId] || {};
+  const color = currentCard.color || "";
   const title = currentCard.title || "";
   const manaCost = currentCard.manaCost || "";
   const typeLine = currentCard.typeLine || "";
@@ -42,8 +43,17 @@ function App() {
     }
   };
 
-  // Select frame based on rarity
+  // Select frame based on rarity or color
   const getFrame = () => {
+    // 1. Color-based frame selection
+    if (color) {
+      const c = color.toLowerCase();
+      if (c === "white" && frames.white) return frames.white;
+      if (c === "artifact" && frames.artifact) return frames.artifact;
+      if (c === "land" && frames.land) return frames.land;
+    }
+
+    // 2. Fallback to Rarity-based selection (legacy behavior)
     const r = normalizeRarity(rarity);
     if (r === "Mythic") return frames.mythic;
     if (r === "Rare") return frames.rare;
@@ -133,7 +143,9 @@ function App() {
             frameUncommonSource={frames.uncommon}
             frameRareSource={frames.rare}
             frameMythicSource={frames.mythic}
+
             symbolImgs={symbols}
+            raritySymbols={raritySymbols}
             title={title}
             manaCost={manaCost}
             typeLine={typeLine}

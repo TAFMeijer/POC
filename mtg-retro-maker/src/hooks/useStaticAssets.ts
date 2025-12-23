@@ -7,8 +7,17 @@ export interface StaticAssets {
         uncommon: HTMLImageElement | null;
         rare: HTMLImageElement | null;
         mythic: HTMLImageElement | null;
+        white: HTMLImageElement | null;
+        artifact: HTMLImageElement | null;
+        land: HTMLImageElement | null;
     };
     symbols: Record<string, HTMLImageElement | null>;
+    raritySymbols: {
+        common: HTMLImageElement | null;
+        uncommon: HTMLImageElement | null;
+        rare: HTMLImageElement | null;
+        mythic: HTMLImageElement | null;
+    };
     fontsLoaded: boolean;
     loading: boolean;
 }
@@ -44,8 +53,12 @@ const loadFont = async (name: string, src: string) => {
 
 export function useStaticAssets() {
     const [assets, setAssets] = useState<StaticAssets>({
-        frames: { common: null, uncommon: null, rare: null, mythic: null },
+        frames: {
+            common: null, uncommon: null, rare: null, mythic: null,
+            white: null, artifact: null, land: null
+        },
         symbols: {},
+        raritySymbols: { common: null, uncommon: null, rare: null, mythic: null },
         fontsLoaded: false,
         loading: true,
     });
@@ -66,11 +79,19 @@ export function useStaticAssets() {
             if (!mounted) return;
 
             // 2. Load Frames
+            // Existing rarity frames (keeping for backward compatibility if needed)
             const [common, uncommon, rare, mythic] = await Promise.all([
                 loadImage(`${ASSET_BASE}/White-retro-frame-common.png`),
                 loadImage(`${ASSET_BASE}/White-retro-frame-uncommon.png`),
                 loadImage(`${ASSET_BASE}/White-retro-frame-rare.png`),
                 loadImage(`${ASSET_BASE}/White-retro-frame-mythic.png`),
+            ]);
+
+            // New color-based frames
+            const [whiteFrame, artifactFrame, landFrame] = await Promise.all([
+                loadImage(`${ASSET_BASE}/White-retro-frame.png`),
+                loadImage(`${ASSET_BASE}/Artifact-retro-frame.png`),
+                loadImage(`${ASSET_BASE}/Land-retro-frame.png`),
             ]);
 
             if (!mounted) return;
@@ -87,6 +108,14 @@ export function useStaticAssets() {
                 return [code, img] as const;
             });
 
+            // 4. Load Rarity Symbols
+            const [symCommon, symUncommon, symRare, symMythic] = await Promise.all([
+                loadImage(`${ASSET_BASE}/Common symbol.png`),
+                loadImage(`${ASSET_BASE}/Uncommon symbol.png`),
+                loadImage(`${ASSET_BASE}/Rare symbol.png`),
+                loadImage(`${ASSET_BASE}/Mythic symbol.png`),
+            ]);
+
             const loadedSymbols = await Promise.all(symbolPromises);
             const symbolMap: Record<string, HTMLImageElement | null> = {};
             loadedSymbols.forEach(([code, img]) => {
@@ -96,8 +125,17 @@ export function useStaticAssets() {
             if (!mounted) return;
 
             setAssets({
-                frames: { common, uncommon, rare, mythic },
+                frames: {
+                    common, uncommon, rare, mythic,
+                    white: whiteFrame, artifact: artifactFrame, land: landFrame
+                },
                 symbols: symbolMap,
+                raritySymbols: {
+                    common: symCommon,
+                    uncommon: symUncommon,
+                    rare: symRare,
+                    mythic: symMythic
+                },
                 fontsLoaded: true,
                 loading: false,
             });
