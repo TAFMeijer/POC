@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Global Health Data – Open dashboards, budget query tools, and resources for global health information systems." />
+  <title>Global Health Data</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ── NAV ─────────────────────────────────────────────── -->
+  <header class="nav-wrapper" id="top">
+    <nav class="nav container">
+      <a href="#top" class="nav-brand">
+        <span class="nav-logo" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="14" cy="14" r="13" stroke="#3B82F6" stroke-width="2" />
+            <ellipse cx="14" cy="14" rx="6" ry="13" stroke="#3B82F6" stroke-width="1.5" />
+            <line x1="1.5" y1="14" x2="26.5" y2="14" stroke="#3B82F6" stroke-width="1.5" />
+            <line x1="3" y1="9" x2="25" y2="9" stroke="#3B82F6" stroke-width="1" />
+            <line x1="3" y1="19" x2="25" y2="19" stroke="#3B82F6" stroke-width="1" />
+          </svg>
+        </span>
+        Global Health Data
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="about.html">About</a></li>
+        <li><a href="#tools">Tools</a></li>
+        <li><a href="resources.html">Resources</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ── HERO ─────────────────────────────────────────────── -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="hero-img"
+        style="background-image: url('https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=1600&q=80&auto=format&fit=crop')">
+      </div>
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="container hero-content">
+      <span class="hero-eyebrow">Open · Accessible · Evidence-Based</span>
+      <h1 class="hero-title">Data for a <em>Healthier</em> World</h1>
+      <p class="hero-sub">
+        Dashboards, budget tools, and curated resources to explore global health information systems — openly and
+        freely.
+      </p>
+      <div class="hero-actions">
+        <a href="#tools" class="btn btn-primary">Explore Tools</a>
+        <a href="#resources" class="btn btn-ghost">Browse Resources</a>
+      </div>
+    </div>
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <svg width="20" height="30" viewBox="0 0 20 30">
+        <rect x="1" y="1" width="18" height="28" rx="9" stroke="currentColor" stroke-width="2" fill="none" />
+        <circle cx="10" cy="8" r="3" fill="currentColor">
+          <animate attributeName="cy" from="8" to="20" dur="1.6s" repeatCount="indefinite" />
+          <animate attributeName="opacity" from="1" to="0" dur="1.6s" repeatCount="indefinite" />
+        </circle>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ── STAT STRIP ────────────────────────────────────────── -->
+  <section class="stats" aria-label="Key figures">
+    <div class="container stats-grid">
+      <div class="stat-item">
+        <span class="stat-number">194</span>
+        <span class="stat-label">WHO Member States</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">$9.8T</span>
+        <span class="stat-label">Global Health Spend (2022)</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">46+</span>
+        <span class="stat-label">African Countries Tracked</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number">Free</span>
+        <span class="stat-label">Always Open Access</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ABOUT ─────────────────────────────────────────────── -->
+  <section class="section about" id="about">
+    <div class="container about-grid">
+      <div class="about-visual" aria-hidden="true">
+        <div class="about-img-wrap">
+          <img src="https://images.unsplash.com/photo-1631549916768-4119b2e5f926?w=900&q=80&auto=format&fit=crop"
+            alt="Health worker using a digital system" loading="lazy" />
+          <div class="about-img-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            Open Source
+          </div>
+        </div>
+      </div>
+      <div class="about-text">
+        <span class="section-eyebrow">About This Site</span>
+        <h2 class="section-title">Built for Health Data Practitioners</h2>
+        <p>
+          This site is a personal collection of interactive tools and curated references created to make global health
+          and health financing data more accessible.
+        </p>
+        <p>
+          Whether you're a researcher, policy analyst, or health system professional, these resources are designed to
+          help you explore, query, and understand the data that shapes health policy worldwide — with a particular focus
+          on low- and middle-income countries.
+        </p>
+        <div class="about-tags">
+          <span class="tag">Health Financing</span>
+          <span class="tag">HMIS</span>
+          <span class="tag">Budget Analysis</span>
+          <span class="tag">WHO / World Bank</span>
+          <span class="tag">Sub-Saharan Africa</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TOOLS ─────────────────────────────────────────────── -->
+  <section class="section tools-section" id="tools">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow">My Creations</span>
+        <h2 class="section-title">Interactive Tools</h2>
+        <p class="section-desc">Explore custom-built dashboards and query tools for global health data.</p>
+      </div>
+      <div class="tools-grid">
+
+        <article class="tool-card" id="tool-health-dashboard">
+          <div class="tool-icon" style="background: #EFF6FF;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <path d="M14 17h7M17 14v7" />
+            </svg>
+          </div>
+          <div class="tool-meta">
+            <span class="tool-badge">Dashboard</span>
+          </div>
+          <h3 class="tool-title">Global Health Expenditure Dashboard</h3>
+          <p class="tool-desc">Interactive visualizations of WHO Global Health Expenditure Database — compare health
+            spending trends across countries and income groups.</p>
+          <a href="#" class="tool-link" aria-label="Open Health Expenditure Dashboard">
+            Open Tool <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+        </article>
+
+        <article class="tool-card" id="tool-budget-query">
+          <div class="tool-icon" style="background: #F0FDF4;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+              <path d="M11 8v6M8 11h6" />
+            </svg>
+          </div>
+          <div class="tool-meta">
+            <span class="tool-badge tool-badge--green">Query Tool</span>
+          </div>
+          <h3 class="tool-title">Budget Query Assistant</h3>
+          <p class="tool-desc">Natural-language queries over health budget databases. Ask questions about government
+            health allocations, expenditure breakdowns, and financing gaps — powered by AI-assisted SQL generation.</p>
+          <a href="#" class="tool-link" aria-label="Open Budget Query Assistant">
+            Open Tool <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+        </article>
+
+        <article class="tool-card tool-card--coming-soon" id="tool-hmis">
+          <div class="tool-icon" style="background: #FFF7ED;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div class="tool-meta">
+            <span class="tool-badge tool-badge--orange">Coming Soon</span>
+          </div>
+          <h3 class="tool-title">HMIS Country Profiles</h3>
+          <p class="tool-desc">Country-level profiles of health management information systems — indicators, data
+            quality scores, and system maturity across Sub-Saharan Africa.</p>
+          <span class="tool-link tool-link--disabled">
+            In Development <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </span>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── RESOURCES ──────────────────────────────────────────── -->
+  <section class="section resources-section" id="resources">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-eyebrow">Curated Links</span>
+        <h2 class="section-title">Resources</h2>
+        <p class="section-desc">Key databases, portals, and reading material for global health data.</p>
+      </div>
+      <div class="resources-grid">
+
+        <div class="resource-group">
+          <h3 class="resource-group-title">
+            <span class="resource-group-icon" style="background:#EFF6FF; color:#3B82F6;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <ellipse cx="12" cy="12" rx="10" ry="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+            </span>
+            International Databases
+          </h3>
+          <ul class="resource-list">
+            <li><a href="https://apps.who.int/nha/database" target="_blank" rel="noopener" id="res-who-ghed">WHO Global
+                Health Expenditure Database <span class="ext-icon">↗</span></a></li>
+            <li><a href="https://data.worldbank.org/topic/health" target="_blank" rel="noopener"
+                id="res-wb-health">World Bank Health Data <span class="ext-icon">↗</span></a></li>
+            <li><a href="https://www.healthdata.org/gbd" target="_blank" rel="noopener" id="res-ihme-gbd">IHME Global
+                Burden of Disease <span class="ext-icon">↗</span></a></li>
+            <li><a href="https://www.who.int/global-health-observatory" target="_blank" rel="noopener" id="res-gho">WHO
+                Global Health Observatory <span class="ext-icon">↗</span></a></li>
+          </ul>
+        </div>
+
+        <div class="resource-group">
+          <h3 class="resource-group-title">
+            <span class="resource-group-icon" style="background:#F0FDF4; color:#22C55E;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+              </svg>
+            </span>
+            Key Reading
+          </h3>
+          <ul class="resource-list">
+            <li><a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(17)31465-X/fulltext"
+                target="_blank" rel="noopener" id="res-lancet-uf">Lancet: Universal Health Coverage <span
+                  class="ext-icon">↗</span></a></li>
+            <li><a href="https://www.who.int/publications/i/item/9789240064119" target="_blank" rel="noopener"
+                id="res-who-report">WHO World Health Report <span class="ext-icon">↗</span></a></li>
+            <li><a href="https://openknowledge.worldbank.org/handle/10986/2161" target="_blank" rel="noopener"
+                id="res-wb-healthsystems">World Bank Health Systems Report <span class="ext-icon">↗</span></a></li>
+          </ul>
+        </div>
+
+        <div class="resource-group">
+          <h3 class="resource-group-title">
+            <span class="resource-group-icon" style="background:#FFF7ED; color:#F97316;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon
+                  points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            </span>
+            Tools & Platforms
+          </h3>
+          <ul class="resource-list">
+            <li><a href="https://dhis2.org" target="_blank" rel="noopener" id="res-dhis2">DHIS2 – Health Information
+                System <span class="ext-icon">↗</span></a></li>
+            <li><a href="https://www.openimis.org" target="_blank" rel="noopener" id="res-openimis">openIMIS – Health
+                Insurance <span class="ext-icon">↗</span></a></li>
+            <li><a href="https://health.google.com/covid-19/open-data/" target="_blank" rel="noopener"
+                id="res-google-health">Google Health Open Data <span class="ext-icon">↗</span></a></li>
+            <li><a href="https://www.healthfinancingafrica.org" target="_blank" rel="noopener" id="res-hfa">Health
+                Financing Africa Hub <span class="ext-icon">↗</span></a></li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="nav-brand">
+          <svg width="22" height="22" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true">
+            <circle cx="14" cy="14" r="13" stroke="#93C5FD" stroke-width="2" />
+            <ellipse cx="14" cy="14" rx="6" ry="13" stroke="#93C5FD" stroke-width="1.5" />
+            <line x1="1.5" y1="14" x2="26.5" y2="14" stroke="#93C5FD" stroke-width="1.5" />
+            <line x1="3" y1="9" x2="25" y2="9" stroke="#93C5FD" stroke-width="1" />
+            <line x1="3" y1="19" x2="25" y2="19" stroke="#93C5FD" stroke-width="1" />
+          </svg>
+          Global Health Data
+        </span>
+        <p class="footer-tagline">Open data. Better health decisions.</p>
+      </div>
+      <div class="footer-links">
+        <a href="about.html">About</a>
+        <a href="#tools">Tools</a>
+        <a href="resources.html">Resources</a>
+      </div>
+      <p class="footer-copy">© 2025 global-health-data.org · Made with care</p>
+    </div>
+  </footer>
+
+  <script>
+    // ── Mobile nav toggle
+    const toggle = document.getElementById('navToggle');
+    const links = document.getElementById('navLinks');
+    toggle.addEventListener('click', () => {
+      links.classList.toggle('open');
+      toggle.classList.toggle('active');
+    });
+    links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+      links.classList.remove('open');
+      toggle.classList.remove('active');
+    }));
+
+    // ── Sticky nav shadow on scroll
+    const navWrapper = document.querySelector('.nav-wrapper');
+    window.addEventListener('scroll', () => {
+      navWrapper.classList.toggle('scrolled', window.scrollY > 10);
+    }, { passive: true });
+
+    // ── Fade-in on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.tool-card, .resource-group, .stat-item, .about-grid').forEach(el => {
+      el.classList.add('fade-in');
+      observer.observe(el);
+    });
+  </script>
+</body>
+
+</html>
