@@ -2,7 +2,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 import pandas as pd
-from data.dummy_data import *
+from data.data_loaders import *
 
 C_NIG = '#1a8f4c'
 C_NIG_L = '#a2d6b3'
@@ -54,11 +54,24 @@ def fig_dtp3(iso3="NGA", country_name="Nigeria"):
         fig.add_trace(go.Scatter(x=['Spread'], y=[q1], mode='markers', marker=dict(color='#d9534f', size=6), showlegend=False, hovertemplate=f'Q1: {q1:.1f}%<extra></extra>'), row=1, col=2)
         fig.add_trace(go.Scatter(x=['Spread'], y=[q5], mode='markers', marker=dict(color='#5cb85c', size=6), showlegend=False, hovertemplate=f'Q5: {q5:.1f}%<extra></extra>'), row=1, col=2)
         
+        # Calculate optimal vertical shift to prevent overlap
+        shift_q1, shift_q5 = 0, 0
+        if abs(q1 - q5) < 8:
+            # Shift the higher value up (+y), and lower value down (-y)
+            if q1 > q5:
+                shift_q1, shift_q5 = 8, -8
+            else:
+                shift_q1, shift_q5 = -8, 8
+                
         # Shift annotations to sit nicely next to the vertical line without clamping to axis extremes
-        fig.add_annotation(x=0.5, y=-0.03, text=f"{eq_data['year']} ({eq_data['source']})", showarrow=False, xref='x2', yref='paper', yanchor='top', font=dict(size=8, color='#000'), xanchor='center')
-        fig.add_annotation(x=1.3, y=q1, text=f"{q1:.0f}%", showarrow=False, xref='x2', yref='y2', font=dict(size=8, color='#d9534f'), xanchor='left')
-        fig.add_annotation(x=1.3, y=q5, text=f"{q5:.0f}%", showarrow=False, xref='x2', yref='y2', font=dict(size=8, color='#5cb85c'), xanchor='left')
-        fig.add_annotation(x=0.5, y=-0.17, text="Lowest income<br>vs. highest<br>income quartile", showarrow=False, xref='x2', yref='paper', yanchor='top', font=dict(size=8, color='#666'), xanchor='center')
+        fig.add_annotation(x=0.5, y=-0.03, text=f"{eq_data['year']} ({eq_data['source']})", showarrow=False, xref='x2', yref='paper', yanchor='top', yshift=15, font=dict(size=8, color='#000'), xanchor='center')
+        fig.add_annotation(x=1.3, y=q1, text=f"{q1:.0f}%", showarrow=False, xref='x2', yref='y2', yshift=shift_q1, font=dict(size=8, color='#d9534f'), xanchor='left')
+        fig.add_annotation(x=1.3, y=q5, text=f"{q5:.0f}%", showarrow=False, xref='x2', yref='y2', yshift=shift_q5, font=dict(size=8, color='#5cb85c'), xanchor='left')
+        fig.add_annotation(x=0.5, y=-0.17, text="Lowest income<br>vs. highest<br>income quartile", showarrow=False, xref='x2', yref='paper', yanchor='top', yshift=15, font=dict(size=8, color='#666'), xanchor='center')
+    else:
+        fig.add_annotation(x=0.5, y=-0.17, text="Lowest income<br>vs. highest<br>income quartile", showarrow=False, xref='x2', yref='paper', yanchor='top', yshift=15, font=dict(size=8, color='#666'), xanchor='center')
+        fig.add_annotation(x=0.5, y=50, text="No data", showarrow=False, xref='x2', yref='y2', font=dict(size=10, color='#999'), xanchor='center')
+
 
     year_max = df['Year'].max() if not df.empty else 2024
     xaxis_ticks = list(range(2010, int(year_max) + 1))
@@ -108,10 +121,23 @@ def fig_anc4(iso3="NGA", country_name="Nigeria"):
         fig.add_trace(go.Scatter(x=['Spread'], y=[q1], mode='markers', marker=dict(color='#d9534f', size=6), showlegend=False, hovertemplate=f'Q1: {q1:.1f}%<extra></extra>'), row=1, col=2)
         fig.add_trace(go.Scatter(x=['Spread'], y=[q5], mode='markers', marker=dict(color='#5cb85c', size=6), showlegend=False, hovertemplate=f'Q5: {q5:.1f}%<extra></extra>'), row=1, col=2)
         
-        fig.add_annotation(x=0.5, y=-0.03, text=f"{eq_data['year']} ({eq_data['source']})", showarrow=False, xref='x2', yref='paper', yanchor='top', font=dict(size=8, color='#000'), xanchor='center')
-        fig.add_annotation(x=1.3, y=q1, text=f"{q1:.0f}%", showarrow=False, xref='x2', yref='y2', font=dict(size=8, color='#d9534f'), xanchor='left')
-        fig.add_annotation(x=1.3, y=q5, text=f"{q5:.0f}%", showarrow=False, xref='x2', yref='y2', font=dict(size=8, color='#5cb85c'), xanchor='left')
-        fig.add_annotation(x=0.5, y=-0.17, text="Lowest income<br>vs. highest<br>income quartile", showarrow=False, xref='x2', yref='paper', yanchor='top', font=dict(size=8, color='#666'), xanchor='center')
+        # Calculate optimal vertical shift to prevent overlap
+        shift_q1, shift_q5 = 0, 0
+        if abs(q1 - q5) < 8:
+            # Shift the higher value up (+y), and lower value down (-y)
+            if q1 > q5:
+                shift_q1, shift_q5 = 8, -8
+            else:
+                shift_q1, shift_q5 = -8, 8
+                
+        fig.add_annotation(x=0.5, y=-0.03, text=f"{eq_data['year']} ({eq_data['source']})", showarrow=False, xref='x2', yref='paper', yanchor='top', yshift=15, font=dict(size=8, color='#000'), xanchor='center')
+        fig.add_annotation(x=1.3, y=q1, text=f"{q1:.0f}%", showarrow=False, xref='x2', yref='y2', yshift=shift_q1, font=dict(size=8, color='#d9534f'), xanchor='left')
+        fig.add_annotation(x=1.3, y=q5, text=f"{q5:.0f}%", showarrow=False, xref='x2', yref='y2', yshift=shift_q5, font=dict(size=8, color='#5cb85c'), xanchor='left')
+        fig.add_annotation(x=0.5, y=-0.17, text="Lowest income<br>vs. highest<br>income quartile", showarrow=False, xref='x2', yref='paper', yanchor='top', yshift=15, font=dict(size=8, color='#666'), xanchor='center')
+    else:
+        fig.add_annotation(x=0.5, y=-0.17, text="Lowest income<br>vs. highest<br>income quartile", showarrow=False, xref='x2', yref='paper', yanchor='top', yshift=15, font=dict(size=8, color='#666'), xanchor='center')
+        fig.add_annotation(x=0.5, y=50, text="No data", showarrow=False, xref='x2', yref='y2', font=dict(size=10, color='#999'), xanchor='center')
+
 
     year_max = df['Year'].max() if not df.empty else 2024
     xaxis_ticks = list(range(2010, int(year_max) + 1))
@@ -203,11 +229,12 @@ def fig_mmr(iso3="NGA", country_name="Nigeria"):
     fig = go.Figure()
     
     y_max = 1000
-    if not df.empty and 'Country' in df.columns:
-        max_val = df[['Country', 'Upper']].max(numeric_only=True).max() if 'Upper' in df.columns else df[['Country', 'Median']].max().max()
-        y_max = int(max_val * 1.2)
-        y_max = max(100, (y_max // 100) * 100) # round up to nearest 100
-        
+    if not df.empty and not peer_lines.empty:
+        p75 = peer_lines['MMR'].quantile(0.75) if 'MMR' in peer_lines.columns else 0
+        country_max = df['Country'].max() * 1.2 if 'Country' in df.columns else 0
+        if pd.notna(p75):
+            y_max = max(int(np.ceil(max(p75, country_max))), 10)
+            
     t_step = max(10, y_max // 5)
     
     ht = 'year: %{x}<br>value: %{y:,.0f}<extra></extra>'
@@ -376,97 +403,6 @@ def fig_oop(iso3="NGA", country_name="Nigeria"):
     )
     return fig
 
-def fig_che_ppp(iso3="NGA", country_name="Nigeria"):
-    df = get_che_ppp_data(iso3)
-    fig = go.Figure()
-    
-    for i, row in df.iterrows():
-        fig.add_trace(go.Scatter(x=[row['Metric'], row['Metric']], y=[0, max(row['Value'], row['Median']) + 10], mode='lines', line=dict(color='#ccc', width=1)))
-        fig.add_trace(go.Scatter(x=[row['Metric']], y=[row['Value']], mode='markers', marker=dict(color=C_NIG, size=8)))
-        fig.add_trace(go.Scatter(x=[row['Metric']], y=[row['Median']], mode='markers', marker=dict(color=C_MED, size=8)))
-
-    lyt = layout_defaults()
-    lyt['margin'] = dict(l=30, r=5, t=10, b=20)
-    fig.update_layout(**lyt, yaxis=dict(range=[0, max(df['Value'].max(), df['Median'].max()) + 50], title='ppp int$ in 2019', gridcolor='#fff', title_font=dict(size=8)))
-    return fig
-
-def fig_composition(iso3="NGA", country_name="Nigeria"):
-    df = get_composition_che_data(iso3)
-    fig = go.Figure()
-    for i, row in df.iterrows():
-        fig.add_trace(go.Scatter(x=[0, 100], y=[row['Component'], row['Component']], mode='lines', line=dict(color='#ccc', width=1)))
-        fig.add_trace(go.Scatter(x=[row['Median']], y=[row['Component']], mode='markers', marker=dict(color=C_MED, size=8)))
-        fig.add_trace(go.Scatter(x=[row['Country']], y=[row['Component']], mode='markers', marker=dict(color=C_NIG, size=8)))
-        
-    lyt = layout_defaults()
-    lyt['margin'] = dict(l=200, r=10, t=10, b=20)
-    fig.update_layout(**lyt, xaxis=dict(range=[0, 100], tickvals=[0, 20, 40, 60, 80, 100], ticktext=['0%', '20%', '40%', '60%', '80%', '100%'], gridcolor='#fff'))
-    return fig
-
-def fig_rssh(iso3="NGA", country_name="Nigeria"):
-    df = get_rssh_investment_data(iso3)
-    fig = go.Figure()
-    
-    fig.add_trace(go.Bar(y=df['Category'], x=df['NFM2_Contributory'], orientation='h', name='Contributory', marker=dict(color=C_NIG_L), legendgroup='NFM2', offsetgroup=1))
-    fig.add_trace(go.Bar(y=df['Category'], x=df['NFM2_Direct'], orientation='h', name='Direct', marker=dict(color=C_NIG), legendgroup='NFM2', offsetgroup=1, base=df['NFM2_Contributory']))
-    
-    fig.add_trace(go.Bar(y=df['Category'], x=df['NFM3_Contributory'], orientation='h', showlegend=False, marker=dict(color=C_NIG_L), legendgroup='NFM3', offsetgroup=2))
-    fig.add_trace(go.Bar(y=df['Category'], x=df['NFM3_Direct'], orientation='h', showlegend=False, marker=dict(color=C_NIG), legendgroup='NFM3', offsetgroup=2, base=df['NFM3_Contributory']))
-    
-    lyt = layout_defaults()
-    lyt['margin'] = dict(l=180, r=10, t=40, b=20)
-    lyt['showlegend'] = True
-    fig.update_layout(
-        **lyt, 
-        barmode='group',
-        yaxis=dict(autorange='reversed'),
-        xaxis=dict(gridcolor='#fff'),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0, font=dict(size=9))
-    )
-    return fig
-
-def fig_hr(iso3="NGA", country_name="Nigeria"):
-    df = get_human_resources_data(iso3)
-    fig = go.Figure()
-    for i, row in df.iterrows():
-        fig.add_trace(go.Scatter(x=[row['Median'], row['Country']], y=[row['Type'], row['Type']], mode='lines', line=dict(color='#ccc', width=1)))
-        fig.add_trace(go.Scatter(x=[row['Median']], y=[row['Type']], mode='markers', marker=dict(color=C_MED, size=8)))
-        fig.add_trace(go.Scatter(x=[row['Country']], y=[row['Type']], mode='markers', marker=dict(color=C_NIG, size=8)))
-        
-    lyt = layout_defaults()
-    lyt['margin'] = dict(l=10, r=10, t=10, b=20)
-    
-    max_val = max(df['Median'].max(), df['Country'].max()) + 5
-    fig.update_layout(**lyt, yaxis=dict(showticklabels=False), xaxis=dict(range=[0, max_val], title='density per 10,000 population', gridcolor='#fff', title_font=dict(size=8)))
-    
-    for i, row in df.iterrows():
-        fig.add_annotation(x=max_val/2, y=row['Type'], text=row['Type'], showarrow=False, yshift=15, font=dict(size=9, color='#666'))
-    return fig
-
-def _single_point_fig(x_med=None, x_nig=None, range_max=100):
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=[0, range_max], y=['Metric', 'Metric'], mode='lines', line=dict(color='#ccc', width=1)))
-    if x_med is not None:
-        fig.add_trace(go.Scatter(x=[x_med], y=['Metric'], mode='markers', marker=dict(color=C_MED, size=8)))
-    if x_nig is not None:
-        fig.add_trace(go.Scatter(x=[x_nig], y=['Metric'], mode='markers', marker=dict(color=C_NIG, size=8)))
-        
-    lyt = layout_defaults()
-    lyt['margin'] = dict(l=10, r=10, t=0, b=15)
-    fig.update_layout(**lyt, yaxis=dict(showticklabels=False), xaxis=dict(range=[0, range_max], tickvals=[0, 20, 40, 60, 80, 100], ticktext=['0%', '20%', '40%', '60%', '80%', '100%'] if range_max==100 else None, gridcolor='#fff'))
-    return fig
-
-def fig_med_avail(iso3="NGA", country_name="Nigeria"):
-    from data.dummy_data import generate_pseudo_random_variance
-    return _single_point_fig(x_med=None, x_nig=min(100, max(0, 35 + generate_pseudo_random_variance(iso3, 0, 10))))
-
-def fig_diag_avail(iso3="NGA", country_name="Nigeria"):
-    from data.dummy_data import generate_pseudo_random_variance
-    return _single_point_fig(x_med=60, x_nig=min(100, max(0, 65 + generate_pseudo_random_variance(iso3, 0, 10))))
-
-def fig_absence(iso3="NGA", country_name="Nigeria"):
-    from data.dummy_data import generate_pseudo_random_variance
-    return _single_point_fig(x_med=None, x_nig=min(100, max(0, 45 + generate_pseudo_random_variance(iso3, 0, 10))))
 
 def fig_md(iso3="NGA", country_name="Nigeria"):
     df = get_md_data(iso3)
@@ -475,15 +411,18 @@ def fig_md(iso3="NGA", country_name="Nigeria"):
     if not df.empty and 'Year' in df.columns:
         df = df[df['Year'] >= 2010]
         
+    peer_lines = get_md_peer_lines(iso3)
     y_max = 50
-    if not df.empty:
-        max_val = df[['Country', 'Upper']].max(numeric_only=True).max() if 'Upper' in df.columns else df['Country'].max()
-        if pd.notna(max_val) and max_val > 0:
-            y_max = int(np.ceil((max_val * 1.2) / 10.0)) * 10
+    if not peer_lines.empty and not df.empty and 'Median' in df.columns:
+        p75 = peer_lines['MD per 10k pop'].quantile(0.75)
+        country_max = df['Country'].max() * 1.2 if 'Country' in df.columns else 0
+        if pd.notna(p75):
+            # Scale to either the 75th percentile of peers, or the country's max value + 20% margin, whichever is higher
+            y_max = max(int(np.ceil(max(p75, country_max))), 1)
             
-    y_tick_step = max(10, y_max // 5)
+    y_tick_step = max(1, y_max // 5)
             
-    fig = _generic_line_chart(df, y_max=y_max, y_tick_step=y_tick_step, is_percent=False, peer_lines=get_md_peer_lines(iso3), peer_val_col='MD per 10k pop', iso3=iso3)
+    fig = _generic_line_chart(df, y_max=y_max, y_tick_step=y_tick_step, is_percent=False, peer_lines=peer_lines, peer_val_col='MD per 10k pop', iso3=iso3)
     fig.update_traces(hovertemplate='year: %{x}<br>value: %{y:.2f}<extra></extra>')
     return fig
 
@@ -494,15 +433,17 @@ def fig_nurse(iso3="NGA", country_name="Nigeria"):
     if not df.empty and 'Year' in df.columns:
         df = df[df['Year'] >= 2010]
         
+    peer_lines = get_nurse_peer_lines(iso3)
     y_max = 100
-    if not df.empty:
-        max_val = df[['Country', 'Upper']].max(numeric_only=True).max() if 'Upper' in df.columns else df['Country'].max()
-        if pd.notna(max_val) and max_val > 0:
-            y_max = int(np.ceil((max_val * 1.2) / 10.0)) * 10
+    if not peer_lines.empty and not df.empty and 'Median' in df.columns:
+        p75 = peer_lines['Nurse and midwives per 10k pop'].quantile(0.75)
+        country_max = df['Country'].max() * 1.2 if 'Country' in df.columns else 0
+        if pd.notna(p75):
+            y_max = max(int(np.ceil(max(p75, country_max))), 1)
             
-    y_tick_step = max(10, y_max // 5)
+    y_tick_step = max(1, y_max // 5)
             
-    fig = _generic_line_chart(df, y_max=y_max, y_tick_step=y_tick_step, is_percent=False, peer_lines=get_nurse_peer_lines(iso3), peer_val_col='Nurse and midwives per 10k pop', iso3=iso3)
+    fig = _generic_line_chart(df, y_max=y_max, y_tick_step=y_tick_step, is_percent=False, peer_lines=peer_lines, peer_val_col='Nurse and midwives per 10k pop', iso3=iso3)
     fig.update_traces(hovertemplate='year: %{x}<br>value: %{y:.2f}<extra></extra>')
     return fig
 
@@ -513,14 +454,16 @@ def fig_chw(iso3="NGA", country_name="Nigeria"):
     if not df.empty and 'Year' in df.columns:
         df = df[df['Year'] >= 2010]
         
+    peer_lines = get_chw_peer_lines(iso3)
     y_max = 50
-    if not df.empty:
-        max_val = df[['Country', 'Upper']].max(numeric_only=True).max() if 'Upper' in df.columns else df['Country'].max()
-        if pd.notna(max_val) and max_val > 0:
-            y_max = int(np.ceil((max_val * 1.2) / 10.0)) * 10
+    if not peer_lines.empty and not df.empty and 'Median' in df.columns:
+        p75 = peer_lines['CHW per 10k pop'].quantile(0.75)
+        country_max = df['Country'].max() * 1.2 if 'Country' in df.columns else 0
+        if pd.notna(p75):
+            y_max = max(int(np.ceil(max(p75, country_max))), 1)
             
-    y_tick_step = max(10, y_max // 5)
+    y_tick_step = max(1, y_max // 5)
             
-    fig = _generic_line_chart(df, y_max=y_max, y_tick_step=y_tick_step, is_percent=False, peer_lines=get_chw_peer_lines(iso3), peer_val_col='CHW per 10k pop', iso3=iso3)
+    fig = _generic_line_chart(df, y_max=y_max, y_tick_step=y_tick_step, is_percent=False, peer_lines=peer_lines, peer_val_col='CHW per 10k pop', iso3=iso3)
     fig.update_traces(hovertemplate='year: %{x}<br>value: %{y:.2f}<extra></extra>')
     return fig

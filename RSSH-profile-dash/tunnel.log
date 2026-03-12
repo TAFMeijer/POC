@@ -1,0 +1,49 @@
+==================================================
+Starting RSSH Profile Dashboard & Cloudflare Tunnel
+==================================================
+
+[1/4] Checking Cloudflare Authentication...
+
+[2/4] Setting up Tunnel (rssh-dash)...
+Tunnel 'rssh-dash' already exists.
+
+[3/4] Configuring Routing Rules...
+
+[4/4] Starting Services...
+Starting Python Dashboard (app.py) on Port 8050...
+Dash is running on http://127.0.0.1:8050/HealthSystemIndicators/
+
+ * Serving Flask app 'app'
+ * Debug mode: on
+
+Dashboard is starting locally. Establishing Cloudflare edge connection...
+Your dashboard will be publicly available at: https://global-health-data.org/HealthSystemIndicators/
+
+Press CTRL+C at any time to shut down both the tunnel and the dashboard.
+2026-03-12T08:45:15Z INF Starting tunnel tunnelID=68ba104f-0063-4586-be76-efb7355a7a2a
+2026-03-12T08:45:15Z INF Version 2026.2.0 (Checksum dc6e60da390e702c4db3332d0cc9cf4e98a88df99f17273e9b3d83f435695fb4)
+2026-03-12T08:45:15Z INF GOOS: darwin, GOVersion: go1.25.7, GoArch: arm64
+2026-03-12T08:45:15Z INF Settings: map[config:/Users/tommeijer/.cloudflared/rssh-dash-config.yml cred-file:/Users/tommeijer/.cloudflared/68ba104f-0063-4586-be76-efb7355a7a2a.json credentials-file:/Users/tommeijer/.cloudflared/68ba104f-0063-4586-be76-efb7355a7a2a.json]
+2026-03-12T08:45:15Z INF cloudflared will not automatically update if installed by a package manager.
+2026-03-12T08:45:15Z INF Generated Connector ID: 313e12fc-9c25-43c1-a389-d9503b85e2c4
+2026-03-12T08:45:15Z INF Initial protocol quic
+2026-03-12T08:45:15Z INF ICMP proxy will use 192.168.1.25 as source for IPv4
+2026-03-12T08:45:15Z INF ICMP proxy will use fe80::4ea:99a0:c4ea:94b2 in zone en0 as source for IPv6
+2026-03-12T08:45:15Z INF Created ICMP proxy listening on 192.168.1.25:0
+2026-03-12T08:45:15Z INF ICMP proxy will use 192.168.1.25 as source for IPv4
+2026-03-12T08:45:15Z INF ICMP proxy will use fe80::4ea:99a0:c4ea:94b2 in zone en0 as source for IPv6
+2026-03-12T08:45:15Z INF Starting metrics server on 127.0.0.1:20241/metrics
+2026-03-12T08:45:15Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=0 event=0 ip=198.41.192.167
+2026-03-12T08:45:16Z INF Registered tunnel connection connIndex=0 connection=4a0a9db2-0c48-4fb7-b181-2bf0bc36940e event=0 ip=198.41.192.167 location=mrs04 protocol=quic
+2026-03-12T08:45:16Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=1 event=0 ip=198.41.200.33
+2026-03-12T08:45:16Z INF Registered tunnel connection connIndex=1 connection=48d2c1b1-6913-45a8-a015-8dd7d76e06cc event=0 ip=198.41.200.33 location=mrs06 protocol=quic
+2026-03-12T08:45:17Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=2 event=0 ip=198.41.200.113
+2026-03-12T08:45:17Z INF Registered tunnel connection connIndex=2 connection=25f65a89-bcbd-42f5-afa1-b7f83fc6e51f event=0 ip=198.41.200.113 location=mrs06 protocol=quic
+2026-03-12T08:45:18Z INF Tunnel connection curve preferences: [X25519MLKEM768 CurveP256] connIndex=3 event=0 ip=198.41.192.67
+2026-03-12T08:45:18Z INF Registered tunnel connection connIndex=3 connection=017a72aa-b2fd-434d-af52-3d80d8a65511 event=0 ip=198.41.192.67 location=mrs04 protocol=quic
+/opt/anaconda3/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+2026-03-12T09:23:09Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:8050: connect: connection refused" connIndex=2 event=1 ingressRule=0 originService=http://127.0.0.1:8050
+2026-03-12T09:23:09Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:8050: connect: connection refused" connIndex=2 dest=https://global-health-data.org/HealthSystemIndicators/_reload-hash event=0 ip=198.41.200.113 type=http
+2026-03-12T09:23:12Z ERR  error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:8050: connect: connection refused" connIndex=2 event=1 ingressRule=0 originService=http://127.0.0.1:8050
+2026-03-12T09:23:12Z ERR Request failed error="Unable to reach the origin service. The service may be down or it may not be responding to traffic from cloudflared: dial tcp 127.0.0.1:8050: connect: connection refused" connIndex=2 dest=https://global-health-data.org/HealthSystemIndicators/_reload-hash event=0 ip=198.41.200.113 type=http
