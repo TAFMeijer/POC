@@ -1,0 +1,57 @@
+/* Global App Styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #ffffff;
+}
+
+.dashboard-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+}
+
+.header-container {
+    position: relative;
+}
+
+.title-wrapper {
+    position: relative;
+    z-index: 10;
+}
+
+.dashboard-logo {
+    position: absolute;
+    top: 15px;
+    left: 20px;
+    height: 40px;
+    z-index: 0;
+}
+
+.dashboard-title {
+    font-family: "Arial Black", sans-serif;
+    font-size: 20pt;
+    text-align: center;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-subtitle {
+    font-family: Arial, sans-serif;
+    font-style: italic;
+    font-size: 10pt;
+    color: #6c757d;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.filter-row {
+    margin-bottom: 9px;
+}
+
+.btn-export {
+    margin-top: 32px;
+}
+
+.chart-wrapper {
+    position: relative;
+}

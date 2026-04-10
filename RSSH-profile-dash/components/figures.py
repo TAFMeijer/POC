@@ -327,8 +327,12 @@ def fig_gghe_d(iso3="NGA", country_name="Nigeria"):
     if df.empty:
         return fig
         
-    y_max_gghe = df[['GGHE_GDP', 'GGHE_Upper']].max(numeric_only=True).max() if 'GGHE_Upper' in df.columns else df['GGHE_GDP'].max()
-    y_max = max(1, y_max_gghe * 1.2) if pd.notna(y_max_gghe) else 10
+    if 'GGHE_Upper' in df.columns:
+        y_max_gghe = max(df['GGHE_GDP'].max(), df['GGHE_Upper'].max())
+    else:
+        y_max_gghe = df['GGHE_GDP'].max()
+        
+    y_max = max(1, int(np.ceil(y_max_gghe))) if pd.notna(y_max_gghe) else 10
     
     ht = 'year: %{x}<br>value: %{y:.1f}%<extra></extra>'
     
