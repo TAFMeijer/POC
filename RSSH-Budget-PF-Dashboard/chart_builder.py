@@ -273,7 +273,7 @@ def build_main_chart(app, country, ip, component):
         font_family="Arial",
         barmode='stack',
         bargap=0.3,
-        margin=dict(l=360, r=margin_r, t=60, b=20),
+        margin=dict(l=450, r=margin_r, t=60, b=20),
         yaxis=dict(autorange="reversed", ticklabelstandoff=4), # Show sorted top to bottom, offset text visually
         legend=dict(
             title=dict(text="Indicator legend"),
@@ -309,7 +309,7 @@ def build_main_chart(app, country, ip, component):
                 dict(
                     source=app.get_asset_url(fn),
                     xref="paper", yref="y",
-                    x=-0.21, y=y_mid_str,
+                    x=-0.35, y=y_mid_str,
                     sizex=0.05, sizey=3,
                     xanchor="right", yanchor="middle",
                     sizing="contain"
@@ -322,5 +322,16 @@ def build_main_chart(app, country, ip, component):
     if not b_agg.empty and b_agg['Total Amount'].max() > 0:
         max_b = b_agg['Total Amount'].max() / 1_000_000
         fig.update_xaxes(range=[0, max_b * 1.15], row=1, col=1)
+
+    # Pad shared axes for Indicators and WPTM to guarantee text doesn't overflow
+    max_i = 0
+    if not i_filt.empty:
+        mod_counts = i_filt.groupby('Module').size()
+        if not mod_counts.empty:
+            max_i = mod_counts.max()
+            
+    overall_max = max(max_w, max_i)
+    if overall_max > 0:
+        fig.update_xaxes(range=[0, overall_max * 1.15], row=1, col=2)
         
     return fig, {'height': f"{calculated_height}px", 'transition': 'height 0.4s ease-out'}

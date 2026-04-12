@@ -36,7 +36,7 @@ app.layout = dbc.Container([
             dbc.Label("Select Component"),
             dcc.Dropdown(
                 id='component-dropdown',
-                options=[{'label': 'All Components', 'value': 'ALL'}] + [{'label': c, 'value': c} for c in ['HIV/AIDS', 'Tuberculosis', 'Malaria', 'RSSH', 'Multi-Component', 'Program Management']],
+                options=[{'label': 'All Components', 'value': 'ALL'}] + [{'label': c, 'value': c} for c in ['HIV/AIDS', 'Tuberculosis', 'Malaria', 'RSSH', 'Program Management']],
                 value='ALL'
             )
         ], width=3),
@@ -121,22 +121,30 @@ def display_hover(hoverData):
         pad = '0.075in'
         fsize = '10.5px'
         
-    style_table = {'borderCollapse': 'collapse', 'textAlign': 'left', 'width': '100%', 'fontSize': fsize, 'whiteSpace': 'normal', 'wordWrap': 'break-word', 'tableLayout': 'fixed'}
+    style_table = {'borderCollapse': 'collapse', 'textAlign': 'left', 'width': '100%', 'fontSize': fsize, 'whiteSpace': 'normal', 'wordWrap': 'break-word', 'tableLayout': 'auto'}
     style_th = {'padding': pad, 'borderBottom': '1px solid #ddd', 'backgroundColor': '#f8f9fa', 'color': '#333', 'whiteSpace': 'normal', 'wordWrap': 'break-word'}
     style_td = {'padding': pad, 'borderBottom': '1px solid #eee', 'color': '#333', 'whiteSpace': 'normal', 'wordWrap': 'break-word'}
         
     dir_ = 'right' if type_ == 'BUDGET' else 'left'
-    if bbox["y0"] > 450:
+    
+    if bbox["y0"] < 250:
+        dir_ = 'bottom' # HARD BOUNDARY tracking upper graph margin to inherently protect Dropsdowns
+    elif bbox["y0"] > 450:
         dir_ = 'top'
 
+    style_no_wrap = {**style_td, 'whiteSpace': 'nowrap', 'width': '1%'}
+    style_th_no_wrap = {**style_th, 'whiteSpace': 'nowrap', 'width': '1%'}
+
     if type_ == 'BUDGET':
+        style_budget_th = {**style_th_no_wrap, 'textAlign': 'right'}
+        style_budget_td = {**style_no_wrap, 'textAlign': 'right'}
         if not data:
             return True, bbox, html.Div([
                 html.B("Budget Details"), html.Br(), "No Interventions"
-            ])
-        rows = [html.Tr([html.Th("Intervention", style=style_th), html.Th("Budget ($M)", style=style_th)])]
+            ]), dir_
+        rows = [html.Tr([html.Th("Intervention", style=style_th), html.Th("Budget ($M)", style=style_budget_th)])]
         for d in data:
-            rows.append(html.Tr([html.Td(d['Intervention'], style=style_td), html.Td(d['Amount'], style=style_td)]))
+            rows.append(html.Tr([html.Td(d['Intervention'], style=style_td), html.Td(d['Amount'], style=style_budget_td)]))
         return True, bbox, html.Div([
             html.B("Interventions", style={'marginBottom': '10px', 'display': 'block'}),
             html.Table(rows, style=style_table)
@@ -145,10 +153,9 @@ def display_hover(hoverData):
     elif type_ == 'INDICATOR_CUSTOM':
         data = obj.get('data', [])
         title = obj.get('title', 'Indicators')
-        # Setting Indicator Name roughly 3x wider (75% to 25%)
-        rows = [html.Tr([html.Th("Implementation Period", style={**style_th, 'width': '25%'}), html.Th("Indicator Name", style={**style_th, 'width': '75%'})])]
+        rows = [html.Tr([html.Th("Implementation Period", style=style_th_no_wrap), html.Th("Indicator Name", style=style_th)])]
         for d in data:
-            rows.append(html.Tr([html.Td(d['ip'], style=style_td), html.Td(d['name'], style=style_td)]))
+            rows.append(html.Tr([html.Td(d['ip'], style=style_no_wrap), html.Td(d['name'], style=style_td)]))
         return True, bbox, html.Div([
             html.B(title, style={'marginBottom': '10px', 'display': 'block'}),
             html.Table(rows, style=style_table)
@@ -157,24 +164,23 @@ def display_hover(hoverData):
     elif type_ == 'INDICATOR_STANDARD':
         data = obj.get('data', [])
         title = obj.get('title', 'Indicators')
-        # Setting Indicator Name vastly wider (65%) vs IP (20%) and Code (15%)
-        rows = [html.Tr([html.Th("Implementation Period", style={**style_th, 'width': '20%'}), html.Th("Indicator Code", style={**style_th, 'width': '15%'}), html.Th("Indicator Name", style={**style_th, 'width': '65%'})])]
+        rows = [html.Tr([html.Th("Implementation Period", style=style_th_no_wrap), html.Th("Indicator Code", style=style_th_no_wrap), html.Th("Indicator Name", style=style_th)])]
         for d in data:
-            rows.append(html.Tr([html.Td(d['ip'], style=style_td), html.Td(d['code'], style=style_td), html.Td(d['desc'], style=style_td)]))
+            rows.append(html.Tr([html.Td(d['ip'], style=style_no_wrap), html.Td(d['code'], style=style_no_wrap), html.Td(d['desc'], style=style_td)]))
         return True, bbox, html.Div([
             html.B(title, style={'marginBottom': '10px', 'display': 'block'}),
             html.Table(rows, style=style_table)
-        ], style={'width': '600px'}), dir_
+        ], style={'width': '650px'}), dir_
         
     elif type_ == 'WPTM':
         data = obj.get('data', [])
-        rows = [html.Tr([html.Th("Implementation Period", style=style_th), html.Th("Key Activity", style=style_th)])]
+        rows = [html.Tr([html.Th("Implementation Period", style=style_th_no_wrap), html.Th("Key Activity", style=style_th)])]
         for d in data:
-            rows.append(html.Tr([html.Td(d['ip'], style=style_td), html.Td(d['act'], style=style_td)]))
+            rows.append(html.Tr([html.Td(d['ip'], style=style_no_wrap), html.Td(d['act'], style=style_td)]))
         return True, bbox, html.Div([
             html.B("WPTM Activities", style={'marginBottom': '10px', 'display': 'block'}),
             html.Table(rows, style=style_table)
-        ], style={'width': '375px'}), dir_
+        ], style={'width': '450px'}), dir_
 
     return False, dash.no_update, dash.no_update, dash.no_update
 
@@ -192,3 +198,5 @@ def download_excel(n_clicks, country, ip, component):
 
 if __name__ == '__main__':
     app.run(debug=True, port=8050)
+
+# Forced hot-reload layout flush !

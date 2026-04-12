@@ -1,6 +1,8 @@
 import pandas as pd
 import io
 from dash import dcc
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Alignment
 from data_processing import df_b, df_i, df_w, indicator_order
 
 def build_excel_export(n_clicks, country, ip, component):
@@ -96,10 +98,33 @@ def build_excel_export(n_clicks, country, ip, component):
     # Write to Excel BytesIO
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_sheet1.to_excel(writer, sheet_name='Master_Chart', index=False)
-        df_sheet2.to_excel(writer, sheet_name='Budget_Tooltips', index=False)
-        df_sheet3.to_excel(writer, sheet_name='Indicator_Tooltips', index=False)
-        df_sheet4.to_excel(writer, sheet_name='WPTM_Tooltips', index=False)
+        dfs = {
+            'Master_Chart': df_sheet1,
+            'Budget_Tooltips': df_sheet2,
+            'Indicator_Tooltips': df_sheet3,
+            'WPTM_Tooltips': df_sheet4
+        }
+        for sheet_name, df in dfs.items():
+            df.to_excel(writer, sheet_name=sheet_name, index=False)
+            worksheet = writer.sheets[sheet_name]
+            for idx, col in enumerate(df.columns, 1):
+                if not df.empty:
+                    # Use 85th percentile of text length to aggressively size columns, letting outliers wrap 
+                    aggressive_len = df[col].astype(str).map(len).quantile(0.85)
+                else:
+                    aggressive_len = 0
+                    
+                max_len = max(aggressive_len, len(str(col))) + 1
+                
+                # Cap the maximum width strictly to 80 to prevent any column from overtaking the screen
+                max_len = min(max_len, 80) 
+                
+                worksheet.column_dimensions[get_column_letter(idx)].width = max_len
+                
+            # Apply wrap text and align middle
+            for row in worksheet.iter_rows(min_row=1, max_row=worksheet.max_row, min_col=1, max_col=worksheet.max_column):
+                for cell in row:
+                    cell.alignment = Alignment(wrap_text=True, vertical='center')
         
     output.seek(0)
     filename = f"RSSH_Dashboard_Export_{country}_{component}.xlsx"

@@ -56,7 +56,7 @@ def map_parent_component(row):
         val = row['IndicatorCode'] if pd.notna(row['IndicatorCode']) else row['IndicatorCustomName']
         if pd.notna(val):
             val_upper = str(val).upper()
-            if 'HIV' in val_upper and 'TB' in val_upper: return 'Multi-Component'
+            if 'TB/HIV' in val_upper: return 'Tuberculosis'
             if 'HIV' in val_upper: return 'HIV/AIDS'
             if 'TB' in val_upper or 'TUBERCULOSIS' in val_upper: return 'Tuberculosis'
             if 'MAL' in val_upper: return 'Malaria'
@@ -112,3 +112,5 @@ TYPE_TO_WEIGHT = {
     'Outcome indicator': 'medium',
     'Coverage indicator': 'dark'
 }
+
+# Forced terminal reload 
