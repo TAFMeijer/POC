@@ -1,7 +1,4 @@
 import pandas as pd
-import numpy as np
-
-print("Loading data...")
 
 # Load Data
 budget_path = 'data/Budget data.xlsx'
@@ -128,4 +125,3 @@ TYPE_TO_WEIGHT = {
     'Coverage indicator': 'dark'
 }
 
-# Forced terminal reload 

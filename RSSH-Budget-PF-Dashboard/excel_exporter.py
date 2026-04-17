@@ -88,12 +88,6 @@ def build_excel_export(n_clicks, region, country, ip, component):
     
     # SHEET 3: Indicator Tooltip List
     df_sheet3 = i_filt[['Country', 'Implementation Period Name', 'Module Parent Component', 'Module', 'IndicatorType', 'IsCustom', 'IndicatorCode', 'IndicatorCustomName', 'IndicatorDescription']].copy()
-    try:
-        df_order = pd.read_excel('data/Indicator order.xlsx')
-        indicator_order = dict(zip(df_order['Indicator'], df_order['Order']))
-    except Exception:
-        indicator_order = {}
-    
     df_sheet3['__sort_code'] = df_sheet3['IndicatorCode'].fillna(df_sheet3['IndicatorCustomName'])
     df_sheet3['__sort_order'] = df_sheet3['__sort_code'].map(indicator_order).fillna(99999)
     df_sheet3 = df_sheet3.sort_values(by=['Module Parent Component', 'Module', '__sort_order', '__sort_code', 'Implementation Period Name'])

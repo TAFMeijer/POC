@@ -1,16 +1,13 @@
 import dash
-from dash import dcc, html, Input, Output, State # Triggered hot-reload for refreshed mapping data
-import io
+from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import pandas as pd
 import json
+import urllib.parse
 
 from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order, available_regions, country_to_shortname
 app = dash.Dash(__name__, url_base_pathname='/budget-pf-poc/', external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
 
-import urllib.parse
+
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
@@ -351,7 +348,6 @@ def navigate_to_detailed(clickData):
         if isinstance(raw_c, list):
             raw_c = raw_c[0]
             
-        import urllib.parse
         return f"?country={urllib.parse.quote(str(raw_c))}", "/detailed"
         
     return dash.no_update, dash.no_update
@@ -359,4 +355,3 @@ def navigate_to_detailed(clickData):
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8000)
 
-# Forced hot-reload layout flush !
