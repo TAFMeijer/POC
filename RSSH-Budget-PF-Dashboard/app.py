@@ -7,6 +7,9 @@ import urllib.parse
 from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order, available_regions, country_to_shortname
 app = dash.Dash(__name__, url_base_pathname='/budget-pf-poc/', external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
 
+# Expose the standard Flask server for Gunicorn / WSGI deployments (e.g., Hugging Face)
+server = app.server
+
 
 app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
@@ -353,5 +356,7 @@ def navigate_to_detailed(clickData):
     return dash.no_update, dash.no_update
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    import os
+    port = int(os.environ.get('PORT', 8000))
+    app.run(debug=True, host='0.0.0.0', port=port)
 
