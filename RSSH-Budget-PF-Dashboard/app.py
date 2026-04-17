@@ -7,75 +7,186 @@ from plotly.subplots import make_subplots
 import pandas as pd
 import json
 
-from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order
-app = dash.Dash(__name__, url_base_pathname='/budget-pf-poc/', external_stylesheets=[dbc.themes.FLATLY])
+from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order, available_regions, country_to_shortname
+app = dash.Dash(__name__, url_base_pathname='/budget-pf-poc/', external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
 
+import urllib.parse
 app.layout = dbc.Container([
-    dbc.Row([
+    dcc.Location(id='url', refresh=False),
+    html.Div(id='page-content')
+], fluid=True, className="dashboard-container")
+
+def get_header():
+    return dbc.Row([
         dbc.Col(html.Img(src=app.get_asset_url('GF Logo.PNG'), className="dashboard-logo"), width="auto"),
         dbc.Col([
             html.Div("Budget - PF POC Dashboard", className="dashboard-title"),
-            html.Div("A proof of concept dashboard for Funding Request and Grant Making review of the mapping between Budget and Performance Framework, using selected GC7 data for now. To be used at Country-level review or Implementation Period-level.", 
-                   className="dashboard-subtitle")
-        ], width=12, className="title-wrapper")
-    ], className="header-container"),
-    dbc.Row([
+            html.Div([
+                "A proof of concept dashboard for FR-GM review of the mapping between Budget and Performance Framework, using ",
+                html.B("publicly available"),
+                " GC7 data for now.",
+                html.Br(),
+                "To be used for Regional, Country-level or Grant-level review."
+            ], className="dashboard-subtitle")
+        ], width=9, className="title-wrapper"),
         dbc.Col([
-            dbc.Label("Select Country"),
-            dcc.Dropdown(
-                id='country-dropdown',
-                options=[{'label': c, 'value': c} for c in df_b['Country'].dropna().unique()],
-                value=df_b['Country'].dropna().unique()[0] if len(df_b['Country'].dropna().unique()) > 0 else None
-            )
-        ], width=3),
-        dbc.Col([
-            dbc.Label("Select Implementation Period"),
-            dcc.Dropdown(id='ip-dropdown')
-        ], width=3),
-        dbc.Col([
-            dbc.Label("Select Component"),
-            dcc.Dropdown(
-                id='component-dropdown',
-                options=[{'label': 'All Components', 'value': 'ALL'}] + [{'label': c, 'value': c} for c in ['HIV/AIDS', 'Tuberculosis', 'Malaria', 'RSSH', 'Program Management']],
-                value='ALL'
-            )
-        ], width=3),
-        dbc.Col([
-            dbc.Button("Download Excel Export", id="btn-download", color="secondary", className="w-100 btn-export"),
-            dcc.Download(id="download-excel")
-        ], width=3)
-    ], className="filter-row"),
-    dbc.Row([
-        dbc.Col([
-            dcc.Graph(id='main-chart', clear_on_unhover=True),
-            dcc.Tooltip(id='graph-tooltip')
-        ], width=12, className="chart-wrapper")
+            dcc.Link("Regional Overview", href="/", className="btn btn-outline-primary mb-2 w-100", style={'marginTop': '10px'}),
+            dcc.Link("Detailed Dashboard", href="/detailed", className="btn btn-outline-primary w-100")
+        ], width=2)
+    ], className="header-container")
+
+def layout_overview():
+    return html.Div([
+        get_header(),
+        dbc.Row([
+            dbc.Col([
+                dbc.Label("Select Region", style={'fontSize': '14px'}),
+                dcc.Dropdown(
+                    id='overview-region-dropdown',
+                    options=[{'label': 'All Regions', 'value': 'ALL'}] + [{'label': r, 'value': r} for r in available_regions],
+                    value='WCA'
+                )
+            ], width=2),
+            dbc.Col([
+                dbc.Checklist(
+                    options=[{"label": "Include Custom & WPTM", "value": "include"}],
+                    value=[],
+                    id="toggle-custom-wptm",
+                    switch=True,
+                    className="large-toggle",
+                    style={'marginTop': '25px', 'fontSize': '14px', 'display': 'inline-block', 'marginRight': '30px'}
+                ),
+                dbc.Checklist(
+                    options=[{"label": "Percentage View", "value": "percent"}],
+                    value=[],
+                    id="toggle-percent",
+                    switch=True,
+                    className="large-toggle",
+                    style={'fontSize': '14px', 'display': 'inline-block', 'marginTop': '25px'}
+                )
+            ], width=8, className="d-flex align-items-center")
+        ], className="filter-row"),
+        dbc.Row([
+            dbc.Col([
+                dcc.Graph(id='overview-chart', clear_on_unhover=True)
+            ], width=12, className="chart-wrapper")
+        ])
     ])
-], fluid=True, className="dashboard-container")
+
+def layout_detailed(country='Benin'):
+    from data_processing import country_to_region
+    region_val = country_to_region.get(country, 'WCA') if country != 'ALL' else 'ALL'
+    
+    if region_val == 'ALL':
+        c_opts = df_b['Country'].dropna().unique()
+    else:
+        c_opts = [c for c in df_b['Country'].dropna().unique() if country_to_region.get(c) == region_val]
+        
+    if country == 'ALL':
+        ips = df_b['Implementation Period Name'].dropna().unique()
+    else:
+        ips = df_b[df_b['Country'] == country]['Implementation Period Name'].dropna().unique()
+        
+    ip_val = 'ALL'
+
+    return html.Div([
+        get_header(),
+        dbc.Row([
+            dbc.Col([
+                dbc.Label("Select Region", style={'fontSize': '14px'}),
+                dcc.Dropdown(
+                    id='region-dropdown',
+                    options=[{'label': 'All Regions', 'value': 'ALL'}] + [{'label': r, 'value': r} for r in available_regions],
+                    value=region_val
+                )
+            ], width=2),
+            dbc.Col([
+                dbc.Label("Select Country", style={'fontSize': '14px'}),
+                dcc.Dropdown(
+                    id='country-dropdown',
+                    options=[{'label': 'All Countries', 'value': 'ALL'}] + [{'label': country_to_shortname.get(c, c), 'value': c} for c in c_opts],
+                    value=country
+                )
+            ], width=2),
+            dbc.Col([
+                dbc.Label("Select Implementation Period", style={'fontSize': '14px'}),
+                dcc.Dropdown(
+                    id='ip-dropdown',
+                    options=[{'label': 'All Implementation Periods', 'value': 'ALL'}] + [{'label': ip, 'value': ip} for ip in ips],
+                    value=ip_val
+                )
+            ], width=3),
+            dbc.Col([
+                dbc.Label("Select Component", style={'fontSize': '14px'}),
+                dcc.Dropdown(
+                    id='component-dropdown',
+                    options=[{'label': 'All Components', 'value': 'ALL'}] + [{'label': c, 'value': c} for c in ['HIV/AIDS', 'Tuberculosis', 'Malaria', 'RSSH', 'Program Management']],
+                    value='ALL'
+                )
+            ], width=3),
+            dbc.Col([
+                dbc.Button("Download Excel", id="btn-download", color="secondary", className="w-100 btn-export"),
+                dcc.Download(id="download-excel")
+            ], width=2)
+        ], className="filter-row"),
+        dbc.Row([
+            dbc.Col([
+                dcc.Graph(id='main-chart', clear_on_unhover=True),
+                dcc.Tooltip(id='graph-tooltip')
+            ], width=12, className="chart-wrapper")
+        ])
+    ])
+
+@app.callback(
+    Output('country-dropdown', 'options'),
+    Output('country-dropdown', 'value'),
+    Input('region-dropdown', 'value'),
+    prevent_initial_call=True
+)
+def update_country_dropdown(region):
+    from data_processing import df_b, country_to_region, country_to_shortname
+    all_countries = df_b['Country'].dropna().unique()
+    if not region or region == 'ALL':
+        countries = list(all_countries)
+    else:
+        countries = [c for c in all_countries if country_to_region.get(c) == region]
+    
+    opts = [{'label': 'All Countries', 'value': 'ALL'}] + [{'label': country_to_shortname.get(c, c), 'value': c} for c in countries]
+    val = 'ALL'
+    return opts, val
 
 @app.callback(
     Output('ip-dropdown', 'options'),
     Output('ip-dropdown', 'value'),
-    Input('country-dropdown', 'value')
+    Input('country-dropdown', 'value'),
+    prevent_initial_call=True
 )
 def update_ip_dropdown(country):
-    if not country:
-        return [], None
-    ips = df_b[df_b['Country'] == country]['Implementation Period Name'].dropna().unique()
+    if not country or country == 'ALL':
+        ips = df_b['Implementation Period Name'].dropna().unique()
+    else:
+        ips = df_b[df_b['Country'] == country]['Implementation Period Name'].dropna().unique()
     opts = [{'label': 'All Implementation Periods', 'value': 'ALL'}] + [{'label': ip, 'value': ip} for ip in ips]
     val = 'ALL'
     return opts, val
 
 @app.callback(
     [Output('main-chart', 'figure'),
-     Output('main-chart', 'style')],
+     Output('main-chart', 'style'),
+     Output('main-chart', 'className')],
     [Input('country-dropdown', 'value'),
      Input('ip-dropdown', 'value'),
-     Input('component-dropdown', 'value')]
+     Input('component-dropdown', 'value'),
+     Input('region-dropdown', 'value')]
 )
-def update_chart(country, ip, component):
+def update_chart(country, ip, component, region):
     from chart_builder import build_main_chart
-    return build_main_chart(app, country, ip, component)
+    fig, style = build_main_chart(app, region, country, ip, component)
+    if component == 'ALL':
+        cname = "modebar-vertical-all"
+    else:
+        cname = "modebar-horizontal-single"
+    return fig, style, cname
 
 @app.callback(
     Output("graph-tooltip", "show"),
@@ -92,7 +203,7 @@ def display_hover(hoverData):
     bbox = pt["bbox"]
     
     if "customdata" not in pt:
-        return False, dash.no_update, dash.no_update
+        return False, dash.no_update, dash.no_update, dash.no_update
         
     cd = pt["customdata"]
     if isinstance(cd, list):
@@ -101,7 +212,7 @@ def display_hover(hoverData):
     try:
         obj = json.loads(cd)
     except Exception:
-        return False, dash.no_update, dash.no_update
+        return False, dash.no_update, dash.no_update, dash.no_update
         
     type_ = obj.get('type')
     if type_ == 'EMPTY' or not type_:
@@ -153,9 +264,9 @@ def display_hover(hoverData):
     elif type_ == 'INDICATOR_CUSTOM':
         data = obj.get('data', [])
         title = obj.get('title', 'Indicators')
-        rows = [html.Tr([html.Th("Implementation Period", style=style_th_no_wrap), html.Th("Indicator Name", style=style_th)])]
+        rows = [html.Tr([html.Th("Indicator Name", style=style_th), html.Th("Count", style=style_th_no_wrap)])]
         for d in data:
-            rows.append(html.Tr([html.Td(d['ip'], style=style_no_wrap), html.Td(d['name'], style=style_td)]))
+            rows.append(html.Tr([html.Td(d['name'], style=style_td), html.Td(d.get('count', ''), style=style_no_wrap)]))
         return True, bbox, html.Div([
             html.B(title, style={'marginBottom': '10px', 'display': 'block'}),
             html.Table(rows, style=style_table)
@@ -164,9 +275,9 @@ def display_hover(hoverData):
     elif type_ == 'INDICATOR_STANDARD':
         data = obj.get('data', [])
         title = obj.get('title', 'Indicators')
-        rows = [html.Tr([html.Th("Implementation Period", style=style_th_no_wrap), html.Th("Indicator Code", style=style_th_no_wrap), html.Th("Indicator Name", style=style_th)])]
+        rows = [html.Tr([html.Th("Indicator Code", style=style_th_no_wrap), html.Th("Indicator Name", style=style_th), html.Th("Count", style=style_th_no_wrap)])]
         for d in data:
-            rows.append(html.Tr([html.Td(d['ip'], style=style_no_wrap), html.Td(d['code'], style=style_no_wrap), html.Td(d['desc'], style=style_td)]))
+            rows.append(html.Tr([html.Td(d['code'], style=style_no_wrap), html.Td(d['desc'], style=style_td), html.Td(d.get('count', ''), style=style_no_wrap)]))
         return True, bbox, html.Div([
             html.B(title, style={'marginBottom': '10px', 'display': 'block'}),
             html.Table(rows, style=style_table)
@@ -190,13 +301,62 @@ def display_hover(hoverData):
     State("country-dropdown", "value"),
     State("ip-dropdown", "value"),
     State("component-dropdown", "value"),
+    State("region-dropdown", "value"),
     prevent_initial_call=True
 )
-def download_excel(n_clicks, country, ip, component):
+def download_excel(n_clicks, country, ip, component, region):
     from excel_exporter import build_excel_export
-    return build_excel_export(n_clicks, country, ip, component)
+    return build_excel_export(n_clicks, region, country, ip, component)
+
+@app.callback(
+    Output('page-content', 'children'),
+    Input('url', 'pathname'),
+    State('url', 'search')
+)
+def display_page(pathname, search):
+    if pathname and ('/detailed' in pathname):
+        if search:
+            parsed = urllib.parse.parse_qs(search.lstrip('?'))
+            if 'country' in parsed:
+                return layout_detailed(country=parsed['country'][0])
+        return layout_detailed()
+    return layout_overview()
+
+@app.callback(
+    Output('overview-chart', 'figure'),
+    [Input('overview-region-dropdown', 'value'),
+     Input('toggle-custom-wptm', 'value'),
+     Input('toggle-percent', 'value')]
+)
+def update_overview_chart(region, custom_wptm, percent):
+    from overview_chart_builder import build_overview_chart
+    inc_custom = bool(custom_wptm and "include" in custom_wptm)
+    is_percent = bool(percent and "percent" in percent)
+    fig, style = build_overview_chart(app, region, inc_custom, is_percent)
+    return fig
+
+@app.callback(
+    Output('url', 'search'),
+    Output('url', 'pathname'),
+    Input('overview-chart', 'clickData'),
+    prevent_initial_call=True
+)
+def navigate_to_detailed(clickData):
+    if not clickData:
+        return dash.no_update, dash.no_update
+        
+    pt = clickData['points'][0]
+    if 'customdata' in pt:
+        raw_c = pt['customdata']
+        if isinstance(raw_c, list):
+            raw_c = raw_c[0]
+            
+        import urllib.parse
+        return f"?country={urllib.parse.quote(str(raw_c))}", "/detailed"
+        
+    return dash.no_update, dash.no_update
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8050)
+    app.run(debug=True, host='0.0.0.0', port=8000)
 
 # Forced hot-reload layout flush !

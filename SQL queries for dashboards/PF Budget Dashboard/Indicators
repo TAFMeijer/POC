@@ -1,0 +1,18 @@
+SELECT [Country]
+      ,[Implementation Period Name]
+      ,[Intervention]
+      ,[IndicatorType]
+      ,[IndicatorCode]
+      ,[IndicatorDescription]
+      ,[IndicatorCustomName]
+  FROM [dbo].[PF - C19RM GC7 Merged Indicators Datahub] 
+  WHERE 1=1
+  AND [Funding Source Name] = 'Regular Fund'
+  GROUP BY [Country]
+      ,[Implementation Period Name]
+      ,[Intervention]
+      ,[IndicatorType]
+      ,[IndicatorCode]
+      ,[IndicatorDescription]
+      ,[IndicatorCustomName]
+ORDER BY 1,2

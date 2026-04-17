@@ -13,6 +13,16 @@ df_i = pd.read_excel(indicator_path, usecols=['Country', 'Implementation Period 
 df_w = pd.read_excel(wptm_path, usecols=['Country', 'Implementation Period Name', 'Module', 'KeyActivity'])
 df_ms = pd.read_excel('data/Module Short.xlsx')
 df_order = pd.read_excel('data/Indicator order.xlsx')
+df_g = pd.read_excel('data/Geography.xlsx')
+
+# Filter out Multicountry projects
+df_b = df_b[~df_b['Country'].astype(str).str.startswith('Multicountry')]
+df_i = df_i[~df_i['Country'].astype(str).str.startswith('Multicountry')]
+df_w = df_w[~df_w['Country'].astype(str).str.startswith('Multicountry')]
+
+country_to_region = df_g.set_index('Geography Name')['NewRegioShort'].to_dict()
+country_to_shortname = df_g.set_index('Geography Name')['Country short name'].to_dict()
+available_regions = sorted([r for r in df_g['NewRegioShort'].dropna().unique() if r])
 
 indicator_order = dict(zip(df_order['Indicator'], df_order['Order']))
 
@@ -35,12 +45,14 @@ df_b['Module'] = df_b['Module'].map(module_to_short).fillna(df_b['Module'])
 df_i['Module'] = df_i['Module'].map(module_to_short).fillna(df_i['Module'])
 df_w['Module'] = df_w['Module'].map(module_to_short).fillna(df_w['Module'])
 
+# Force df_b (Budget Data) missing/typo component mappings to strictly conform to the global dictionary
+df_b['Module Parent Component'] = df_b['Module'].map(short_module_to_parent).fillna(df_b['Module Parent Component'])
 # Pre-map WPTM array to its parent component for the new filter
 df_w['Module Parent Component'] = df_w['Module'].map(short_module_to_parent)
 
 # Component Color Map
 COMP_COLORS = {
-    'RSSH': '#44cc36',
+    'RSSH': '#8B31D8',
     'HIV/AIDS': '#ee0c3d',
     'Tuberculosis': '#2e4df9',
     'Malaria': '#fad90d',
@@ -82,6 +94,9 @@ except Exception:
 impact_outcome_mask = df_i['IndicatorType'].isin(['Impact indicator', 'Outcome indicator'])
 df_i.loc[impact_outcome_mask, 'Module'] = df_i.loc[impact_outcome_mask, 'Module Parent Component'] + " (Impact/Outcome)"
 
+# Rename RSSH specifically since it lacks impact indicators
+df_i.loc[impact_outcome_mask & (df_i['Module Parent Component'] == 'RSSH'), 'Module'] = 'RSSH (Outcome)'
+
 # Override with valid mappings from the custom file
 if oi_map:
     mapped_modules = df_i.loc[impact_outcome_mask, 'IndicatorCode'].map(oi_map)
@@ -96,7 +111,7 @@ df_i.loc[df_i['Module'] == 'Program management', 'Module Parent Component'] = 'P
 df_w.loc[df_w['Module'] == 'Program management', 'Module Parent Component'] = 'Program Management'
 
 SHADES = {
-    'RSSH': {'light': '#8ee085', 'medium': '#44cc36', 'dark': '#2c8a22'},
+    'RSSH': {'light': '#C79CEC', 'medium': '#8B31D8', 'dark': '#481573'},
     'HIV/AIDS': {'light': '#f56d8a', 'medium': '#ee0c3d', 'dark': '#a6082a'},
     'Tuberculosis': {'light': '#8296fb', 'medium': '#2e4df9', 'dark': '#172ab5'},
     'Malaria': {'light': '#fce86e', 'medium': '#fad90d', 'dark': '#b59e09'},

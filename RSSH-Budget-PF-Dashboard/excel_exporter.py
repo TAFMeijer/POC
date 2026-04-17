@@ -1,23 +1,34 @@
 import pandas as pd
 import io
+import dash
 from dash import dcc
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment
 from data_processing import df_b, df_i, df_w, indicator_order
 
-def build_excel_export(n_clicks, country, ip, component):
+def build_excel_export(n_clicks, region, country, ip, component):
     if not country or not ip:
         return dash.no_update
         
     # Same filter logic as update_chart
-    if ip == 'ALL':
-        b_filt = df_b[(df_b['Country'] == country)]
-        i_filt = df_i[(df_i['Country'] == country)]
-        w_filt = df_w[(df_w['Country'] == country)].copy()
-    else:
-        b_filt = df_b[(df_b['Country'] == country) & (df_b['Implementation Period Name'] == ip)]
-        i_filt = df_i[(df_i['Country'] == country) & (df_i['Implementation Period Name'] == ip)]
-        w_filt = df_w[(df_w['Country'] == country) & (df_w['Implementation Period Name'] == ip)].copy()
+    b_filt = df_b.copy()
+    i_filt = df_i.copy()
+    w_filt = df_w.copy()
+    
+    if country != 'ALL':
+        b_filt = b_filt[(b_filt['Country'] == country)]
+        i_filt = i_filt[(i_filt['Country'] == country)]
+        w_filt = w_filt[(w_filt['Country'] == country)]
+    elif region and region != 'ALL':
+        from data_processing import country_to_region
+        b_filt = b_filt[b_filt['Country'].map(country_to_region) == region]
+        i_filt = i_filt[i_filt['Country'].map(country_to_region) == region]
+        w_filt = w_filt[w_filt['Country'].map(country_to_region) == region]
+        
+    if ip != 'ALL':
+        b_filt = b_filt[(b_filt['Implementation Period Name'] == ip)]
+        i_filt = i_filt[(i_filt['Implementation Period Name'] == ip)]
+        w_filt = w_filt[(w_filt['Implementation Period Name'] == ip)]
         
     if component != 'ALL':
         b_filt = b_filt[b_filt['Module Parent Component'] == component]
@@ -89,11 +100,18 @@ def build_excel_export(n_clicks, country, ip, component):
     
     # Merge custom and standard names natively into a single 'Indicator Name' attribute
     df_sheet3['Indicator Name'] = df_sheet3['IndicatorCustomName'].fillna(df_sheet3['IndicatorDescription'])
-    df_sheet3.drop(columns=['__sort_code', '__sort_order', 'IndicatorCustomName', 'IndicatorDescription'], inplace=True)
+    
+    # Aggregate to match Tooltips
+    group_cols = ['Country', 'Module Parent Component', 'Module', 'IndicatorType', 'IsCustom', 'IndicatorCode', 'Indicator Name', '__sort_order', '__sort_code']
+    df_sheet3 = df_sheet3.groupby(group_cols, dropna=False).size().reset_index(name='Count')
+    
+    df_sheet3 = df_sheet3.sort_values(by=['Module Parent Component', 'Module', 'Count', '__sort_order', '__sort_code'], ascending=[True, True, False, True, True])
+    df_sheet3.drop(columns=['__sort_code', '__sort_order', 'IndicatorCustomName', 'IndicatorDescription', 'IndicatorType', 'IsCustom'], inplace=True, errors='ignore')
 
     # SHEET 4: WPTM List
-    df_sheet4 = w_filt[['Country', 'Implementation Period Name', 'Module Parent Component', 'Module', 'KeyActivity']].copy()
-    df_sheet4 = df_sheet4.sort_values(by=['Module Parent Component', 'Module', 'Implementation Period Name'])
+    df_sheet4 = w_filt[['Country', 'Module Parent Component', 'Module', 'KeyActivity']].copy()
+    df_sheet4 = df_sheet4.groupby(['Country', 'Module Parent Component', 'Module', 'KeyActivity'], dropna=False).size().reset_index(name='Count')
+    df_sheet4 = df_sheet4.sort_values(by=['Module Parent Component', 'Module', 'Count'], ascending=[True, True, False])
 
     # Write to Excel BytesIO
     output = io.BytesIO()

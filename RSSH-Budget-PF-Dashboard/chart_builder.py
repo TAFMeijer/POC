@@ -3,22 +3,40 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.express as px
-from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order
+from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order, short_module_to_parent
 
-def build_main_chart(app, country, ip, component):
+def build_main_chart(app, region, country, ip, component):
     if not country or not ip:
-        return go.Figure(), {'height': '765px'}
+        return go.Figure(), {'height': '850px'}
     
-    # Filter datasets
-    if ip == 'ALL':
-        b_filt = df_b[(df_b['Country'] == country)]
-        i_filt = df_i[(df_i['Country'] == country)]
-        w_filt = df_w[(df_w['Country'] == country)].copy()
-    else:
-        b_filt = df_b[(df_b['Country'] == country) & (df_b['Implementation Period Name'] == ip)]
-        i_filt = df_i[(df_i['Country'] == country) & (df_i['Implementation Period Name'] == ip)]
-        w_filt = df_w[(df_w['Country'] == country) & (df_w['Implementation Period Name'] == ip)].copy()
+    b_filt = df_b.copy()
+    i_filt = df_i.copy()
+    w_filt = df_w.copy()
+    
+    if country != 'ALL':
+        b_filt = b_filt[(b_filt['Country'] == country)]
+        i_filt = i_filt[(i_filt['Country'] == country)]
+        w_filt = w_filt[(w_filt['Country'] == country)]
+    elif region and region != 'ALL':
+        from data_processing import country_to_region
+        b_filt = b_filt[b_filt['Country'].map(country_to_region) == region]
+        i_filt = i_filt[i_filt['Country'].map(country_to_region) == region]
+        w_filt = w_filt[w_filt['Country'].map(country_to_region) == region]
         
+    if ip != 'ALL':
+        b_filt = b_filt[(b_filt['Implementation Period Name'] == ip)]
+        i_filt = i_filt[(i_filt['Implementation Period Name'] == ip)]
+        w_filt = w_filt[(w_filt['Implementation Period Name'] == ip)]
+        
+    # Dynamically map TB/HIV I-1 indicator to the disease with the larger budget contextually
+    tb_hiv_mask = i_filt['IndicatorCode'] == 'TB/HIV I-1'
+    if tb_hiv_mask.any():
+        hiv_b = b_filt[b_filt['Module Parent Component'] == 'HIV/AIDS']['Total Amount'].sum()
+        tb_b = b_filt[b_filt['Module Parent Component'] == 'Tuberculosis']['Total Amount'].sum()
+        winning_parent = 'HIV/AIDS' if hiv_b > tb_b else 'Tuberculosis'
+        i_filt.loc[tb_hiv_mask, 'Module Parent Component'] = winning_parent
+        i_filt.loc[tb_hiv_mask, 'Module'] = winning_parent + ' (Impact/Outcome)'
+
     if component != 'ALL':
         b_filt = b_filt[b_filt['Module Parent Component'] == component]
         i_filt = i_filt[i_filt['Module Parent Component'] == component]
@@ -29,11 +47,65 @@ def build_main_chart(app, country, ip, component):
     
     # Identify modules that exist for this country/IP
     # Add Impact/Outcome modules correctly to the Budget Dataframe with 0 budget (so they show up grouped correctly)
-    io_modules = i_filt[i_filt['IndicatorType'].isin(['Impact indicator', 'Outcome indicator'])]['Module'].unique()
-    for io_mod in io_modules:
+    io_modules_df = i_filt[i_filt['IndicatorType'].isin(['Impact indicator', 'Outcome indicator'])]
+    for _, row in io_modules_df[['Module', 'Module Parent Component']].drop_duplicates().iterrows():
+        io_mod = row['Module']
+        parent = row['Module Parent Component']
         if io_mod not in b_agg['Module'].values:
-            parent = str(io_mod).replace(" (Impact/Outcome)", "")
             b_agg = pd.concat([b_agg, pd.DataFrame([{'Module Parent Component': parent, 'Module': io_mod, 'Total Amount': 0}])], ignore_index=True)
+
+    # Force injection of ALL modules that exist globally across the selected scope, so filtering by IP doesn't break the Y-Axis structure
+    if country == 'ALL':
+        if region and region != 'ALL':
+            from data_processing import country_to_region
+            country_b_filt = df_b[df_b['Country'].map(country_to_region) == region]
+            country_i_filt = df_i[df_i['Country'].map(country_to_region) == region]
+        else:
+            country_b_filt = df_b.copy()
+            country_i_filt = df_i.copy()
+    else:
+        country_b_filt = df_b[df_b['Country'] == country]
+        country_i_filt = df_i[df_i['Country'] == country]
+    if component != 'ALL':
+        country_b_filt = country_b_filt[country_b_filt['Module Parent Component'] == component]
+        country_i_filt = country_i_filt[country_i_filt['Module Parent Component'] == component]
+        
+    for _, row in country_b_filt[['Module Parent Component', 'Module']].drop_duplicates().iterrows():
+        c_mod = row['Module']
+        c_parent = row['Module Parent Component']
+        if c_mod not in b_agg['Module'].values:
+            b_agg = pd.concat([b_agg, pd.DataFrame([{'Module Parent Component': c_parent, 'Module': c_mod, 'Total Amount': 0}])], ignore_index=True)
+            
+    c_io_modules_df = country_i_filt[country_i_filt['IndicatorType'].isin(['Impact indicator', 'Outcome indicator'])]
+    for _, row in c_io_modules_df[['Module', 'Module Parent Component']].drop_duplicates().iterrows():
+        io_mod = row['Module']
+        parent = row['Module Parent Component']
+        if io_mod not in b_agg['Module'].values:
+            b_agg = pd.concat([b_agg, pd.DataFrame([{'Module Parent Component': parent, 'Module': io_mod, 'Total Amount': 0}])], ignore_index=True)
+
+    # Force injection of standard baseline Impact/Outcome rows 
+    baseline_io = [
+        ('HIV/AIDS', 'HIV/AIDS (Impact/Outcome)'),
+        ('Tuberculosis', 'Tuberculosis (Impact/Outcome)'),
+        ('Malaria', 'Malaria (Impact/Outcome)'),
+        ('RSSH', 'RSSH (Outcome)')
+    ]
+    for parent_comp, io_mod in baseline_io:
+        if component != 'ALL' and parent_comp != component:
+            continue
+        if io_mod not in b_agg['Module'].values:
+            b_agg = pd.concat([b_agg, pd.DataFrame([{'Module Parent Component': parent_comp, 'Module': io_mod, 'Total Amount': 0}])], ignore_index=True)
+
+    # Force injection of all 31 baseline modules mapping to explicitly appear on the Y-Axis even when empty
+    for mod_short, parent_comp in short_module_to_parent.items():
+        if mod_short == 'Program management':
+            parent_comp = 'Program Management'
+            
+        if component != 'ALL' and parent_comp != component:
+            continue
+            
+        if mod_short not in b_agg['Module'].values:
+            b_agg = pd.concat([b_agg, pd.DataFrame([{'Module Parent Component': parent_comp, 'Module': mod_short, 'Total Amount': 0}])], ignore_index=True)
 
     # Custom Sort Order for Components ensuring Program Management is firmly at the bottom
     comp_order_dict = {
@@ -47,8 +119,9 @@ def build_main_chart(app, country, ip, component):
     }
     b_agg['comp_sort'] = b_agg['Module Parent Component'].map(comp_order_dict).fillna(7)
     
-    # Sort Budget descending inside component grouping
-    b_agg = b_agg.sort_values(by=['comp_sort', 'Total Amount'], ascending=[True, False])
+    # Sort Budget descending inside component grouping, forcing Impact/Outcome to the bottom of the zero-budget list
+    b_agg['is_io'] = b_agg['Module'].astype(str).str.contains('(Impact/Outcome)', regex=False) | b_agg['Module'].astype(str).str.contains('(Outcome)', regex=False)
+    b_agg = b_agg.sort_values(by=['comp_sort', 'Total Amount', 'is_io'], ascending=[True, False, True])
     
     # Inject blank spacing rows between distinct components
     new_b_agg_rows = []
@@ -111,7 +184,10 @@ def build_main_chart(app, country, ip, component):
         orientation='h',
         marker_color=colors,
         text=b_agg['Total Amount'].apply(lambda x: f"{x/1_000_000:,.1f}" if x>0 else ""),
+        textfont=dict(size=14),
         textposition='outside',
+        constraintext='none',
+        cliponaxis=False,
         textangle=0,
         name='Budget',
         showlegend=False,
@@ -120,6 +196,7 @@ def build_main_chart(app, country, ip, component):
     ), row=1, col=1)
     
     # Chart 2: Indicators Count with JSON tooltips
+    tot_x_ind = [0] * len(y_vals)
     for ind_type in ['Coverage indicator', 'Outcome indicator', 'Impact indicator']:
         for is_custom in [False, True]:
             sub_i_filt = i_filt[(i_filt['IndicatorType'] == ind_type) & (i_filt['IsCustom'] == is_custom)]
@@ -128,18 +205,16 @@ def build_main_chart(app, country, ip, component):
             bar_colors = []
             custom_data_i = []
             
-            for y_m in y_vals:
+            for i, y_m in enumerate(y_vals):
                 mod_sub = sub_i_filt[sub_i_filt['Module'] == y_m]
                 c = len(mod_sub)
                 counts.append(c)
+                tot_x_ind[i] += c
                 
                 pc = module_to_pc.get(y_m, 'Other')
                 weight = TYPE_TO_WEIGHT.get(ind_type, 'medium')
                 
-                if is_custom:
-                    col = SHADES['Custom'][weight]
-                else:
-                    col = SHADES.get(pc, SHADES['Other'])[weight]
+                col = SHADES.get(pc, SHADES['Other'])[weight]
                 bar_colors.append(col)
                 
                 if c > 0:
@@ -150,28 +225,28 @@ def build_main_chart(app, country, ip, component):
                     mod_sub.sort_values(by=['__sort_order', '__sort_code', 'Implementation Period Name'], inplace=True)
                     
                     if is_custom:
-                        for _, row in mod_sub.iterrows():
-                            name = str(row.get('IndicatorCustomName', ''))
-                            ip_name = str(row.get('Implementation Period Name', ''))
-                            if name == 'nan': name = ''
-                            if ip_name == 'nan': ip_name = 'Unknown'
-                            data.append({'ip': ip_name, 'name': name})
+                        grouped = mod_sub.groupby(['IndicatorCustomName', '__sort_order', '__sort_code'], dropna=False).size().reset_index(name='count')
+                        grouped.sort_values(by=['count', '__sort_order', '__sort_code'], ascending=[False, True, True], inplace=True)
+                        for _, row in grouped.iterrows():
+                            name = str(row['IndicatorCustomName'])
+                            if name == 'nan': name = 'Unknown'
+                            data.append({'name': name, 'count': int(row['count'])})
                         custom_data_i.append([json.dumps({'type': 'INDICATOR_CUSTOM', 'title': f"{ind_type} (Custom)", 'data': data})])
                     else:
-                        for _, row in mod_sub.iterrows():
-                            ip_name = str(row.get('Implementation Period Name', ''))
-                            code = str(row.get('IndicatorCode', ''))
-                            desc = str(row.get('IndicatorDescription', ''))
+                        grouped = mod_sub.groupby(['IndicatorCode', 'IndicatorDescription', '__sort_order', '__sort_code'], dropna=False).size().reset_index(name='count')
+                        grouped.sort_values(by=['count', '__sort_order', '__sort_code'], ascending=[False, True, True], inplace=True)
+                        for _, row in grouped.iterrows():
+                            code = str(row['IndicatorCode'])
+                            desc = str(row['IndicatorDescription'])
                             if code == 'nan': code = ''
                             if desc == 'nan': desc = ''
-                            if ip_name == 'nan': ip_name = 'Unknown'
-                            data.append({'ip': ip_name, 'code': code, 'desc': desc})
+                            data.append({'code': code, 'desc': desc, 'count': int(row['count'])})
                         custom_data_i.append([json.dumps({'type': 'INDICATOR_STANDARD', 'title': f"{ind_type} (Standard)", 'data': data})])
                 else:
                     custom_data_i.append([json.dumps({'type': 'EMPTY'})])
                 
             if sum(counts) > 0:
-                fig.add_trace(go.Bar(
+                trace_args = dict(
                     y=y_vals,
                     x=counts,
                     orientation='h',
@@ -185,26 +260,55 @@ def build_main_chart(app, country, ip, component):
                     showlegend=False,
                     customdata=custom_data_i,
                     hoverinfo='none'
-                ), row=1, col=2)
+                )
+                
+                if is_custom:
+                    trace_args['marker_color'] = "#ececec"
+                    trace_args['marker_pattern_shape'] = "/"
+                    trace_args['marker_pattern_size'] = 3
+                    trace_args['marker_pattern_fgcolor'] = bar_colors
+                    
+                fig.add_trace(go.Bar(**trace_args), row=1, col=2)
+                
+    fig.add_trace(go.Bar(
+        x=[0]*len(y_vals),
+        y=y_vals,
+        base=tot_x_ind,
+        orientation='h',
+        marker_color='rgba(0,0,0,0)',
+        text=[f" {c}" if c > 0 else "" for c in tot_x_ind],
+        textfont=dict(size=14, color='black'),
+        textposition='outside',
+        constraintext='none',
+        showlegend=False,
+        hoverinfo='none',
+        cliponaxis=False
+    ), row=1, col=2)
     
     # Add dummy traces for the dynamic legend
     legend_component = component if component != 'ALL' else 'Other'
+    dummy_y = [y_vals[0]] if y_vals else [None]
     
     for ind_type in ['Coverage indicator', 'Outcome indicator', 'Impact indicator']:
         for is_custom in [False, True]:
             weight = TYPE_TO_WEIGHT.get(ind_type, 'medium')
-            if is_custom:
-                col = SHADES['Custom'][weight]
-            else:
-                col = SHADES.get(legend_component, SHADES['Other'])[weight]
-                
-            fig.add_trace(go.Bar(
-                y=[None], x=[None],
+            col = SHADES.get(legend_component, SHADES['Other'])[weight]
+            
+            trace_args = dict(
+                y=dummy_y, x=[None],
                 name=f"{ind_type} ({'Custom' if is_custom else 'Standard'})",
                 marker_color=col,
                 showlegend=True,
                 hoverinfo='none'
-            ), row=1, col=2)
+            )
+            
+            if is_custom:
+                trace_args['marker_color'] = "#ececec"
+                trace_args['marker_pattern_shape'] = "/"
+                trace_args['marker_pattern_size'] = 3
+                trace_args['marker_pattern_fgcolor'] = col
+                
+            fig.add_trace(go.Bar(**trace_args), row=1, col=2)
     
     # Chart 3: WPTM Count with JSON Tooltips
     wptm_counts = []
@@ -236,7 +340,10 @@ def build_main_chart(app, country, ip, component):
         orientation='h',
         marker_color=wptm_colors,
         text=[str(c) if c > 0 else "" for c in wptm_counts],
+        textfont=dict(size=14),
         textposition='outside',
+        constraintext='none',
+        cliponaxis=False,
         textangle=0,
         name='WPTM',
         showlegend=False,
@@ -246,15 +353,25 @@ def build_main_chart(app, country, ip, component):
     
     # Dynamic Legend Placement to avoid WPTM overlaps
     max_w = max(wptm_counts) if wptm_counts else 0
+    max_i = 0
+    if not i_filt.empty:
+        mod_counts = i_filt.groupby('Module').size()
+        if not mod_counts.empty:
+            max_i = mod_counts.max()
+            
+    overall_max = max(max_w, max_i)
+    max_x_axis = overall_max * 1.15
+    
     leg_y = 0.98
     leg_x = 0.98
     leg_yanchor = "top"
     leg_xanchor = "right"
     margin_r = 20
     
-    if max_w > 0:
+    if overall_max > 0:
         # Check first 8 rows for wide WPTM bars pushing into the legend space
-        top_overlap = any(w > max_w * 0.25 for w in wptm_counts[:8])
+        threshold = max_x_axis * 0.30
+        top_overlap = any(w > threshold for w in wptm_counts[:8])
         
         if top_overlap:
             leg_y = 1.0
@@ -265,7 +382,7 @@ def build_main_chart(app, country, ip, component):
 
     # Dynamic Height constrained natively scaling to explicitly track Row count
     num_rows = max(1, len(y_vals))
-    calculated_height = min(765, max(250, num_rows * 26 + 130))
+    calculated_height = min(850, max(250, num_rows * 30 + 130))
 
     # Formatting
     fig.update_layout(
@@ -273,8 +390,8 @@ def build_main_chart(app, country, ip, component):
         font_family="Arial",
         barmode='stack',
         bargap=0.3,
-        margin=dict(l=450, r=margin_r, t=60, b=20),
-        yaxis=dict(autorange="reversed", ticklabelstandoff=4), # Show sorted top to bottom, offset text visually
+        margin=dict(l=450, r=margin_r, t=40, b=20),
+        yaxis=dict(autorange="reversed", ticklabelstandoff=4, dtick=1, tickfont=dict(size=13)), # Show sorted top to bottom, offset text visually, force ALL tickets to render even if squished
         legend=dict(
             title=dict(text="Indicator legend"),
             yanchor=leg_yanchor,
@@ -324,14 +441,7 @@ def build_main_chart(app, country, ip, component):
         fig.update_xaxes(range=[0, max_b * 1.15], row=1, col=1)
 
     # Pad shared axes for Indicators and WPTM to guarantee text doesn't overflow
-    max_i = 0
-    if not i_filt.empty:
-        mod_counts = i_filt.groupby('Module').size()
-        if not mod_counts.empty:
-            max_i = mod_counts.max()
-            
-    overall_max = max(max_w, max_i)
     if overall_max > 0:
-        fig.update_xaxes(range=[0, overall_max * 1.15], row=1, col=2)
+        fig.update_xaxes(range=[0, max_x_axis], row=1, col=2)
         
     return fig, {'height': f"{calculated_height}px", 'transition': 'height 0.4s ease-out'}

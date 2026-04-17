@@ -1,0 +1,14 @@
+SELECT [Country]
+      ,[Implementation Period Name]
+      ,[Module]
+      ,[Intervention]
+      ,[KeyActivity]
+  FROM [dbo].[PF - C19RM GC7 Merged WPTM Datahub]
+  WHERE 1=1
+  AND [Funding Source Name] = 'Regular Fund'
+  GROUP BY [Country]
+      ,[Implementation Period Name]
+      ,[Module]
+      ,[Intervention]
+      ,[KeyActivity]
+ORDER BY 1,2
