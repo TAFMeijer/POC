@@ -5,20 +5,20 @@ import json
 import urllib.parse
 
 from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order, available_regions, country_to_shortname
-app = dash.Dash(__name__, url_base_pathname='/budget-pf-poc/', external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
+dash_app = dash.Dash(__name__, url_base_pathname='/budget-pf-poc/', external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
 
 # Expose the standard Flask server for Gunicorn / WSGI deployments (e.g., Hugging Face)
-server = app.server
+app = dash_app.server
 
 
-app.layout = dbc.Container([
+dash_app.layout = dbc.Container([
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
 ], fluid=True, className="dashboard-container")
 
 def get_header():
     return dbc.Row([
-        dbc.Col(html.Img(src=app.get_asset_url('GF Logo.PNG'), className="dashboard-logo"), width="auto"),
+        dbc.Col(html.Img(src=dash_app.get_asset_url('GF Logo.PNG'), className="dashboard-logo"), width="auto"),
         dbc.Col([
             html.Div("Budget - PF POC Dashboard", className="dashboard-title"),
             html.Div([
@@ -137,7 +137,7 @@ def layout_detailed(country='Benin'):
         ])
     ])
 
-@app.callback(
+@dash_app.callback(
     Output('country-dropdown', 'options'),
     Output('country-dropdown', 'value'),
     Input('region-dropdown', 'value'),
@@ -155,7 +155,7 @@ def update_country_dropdown(region):
     val = 'ALL'
     return opts, val
 
-@app.callback(
+@dash_app.callback(
     Output('ip-dropdown', 'options'),
     Output('ip-dropdown', 'value'),
     Input('country-dropdown', 'value'),
@@ -170,7 +170,7 @@ def update_ip_dropdown(country):
     val = 'ALL'
     return opts, val
 
-@app.callback(
+@dash_app.callback(
     [Output('main-chart', 'figure'),
      Output('main-chart', 'style'),
      Output('main-chart', 'className')],
@@ -181,14 +181,12 @@ def update_ip_dropdown(country):
 )
 def update_chart(country, ip, component, region):
     from chart_builder import build_main_chart
-    fig, style = build_main_chart(app, region, country, ip, component)
+    fig, style = build_main_chart(dash_app, region, country, ip, component)
     if component == 'ALL':
-        cname = "modebar-vertical-all"
-    else:
         cname = "modebar-horizontal-single"
     return fig, style, cname
 
-@app.callback(
+@dash_app.callback(
     Output("graph-tooltip", "show"),
     Output("graph-tooltip", "bbox"),
     Output("graph-tooltip", "children"),
@@ -295,7 +293,7 @@ def display_hover(hoverData):
 
     return False, dash.no_update, dash.no_update, dash.no_update
 
-@app.callback(
+@dash_app.callback(
     Output("download-excel", "data"),
     Input("btn-download", "n_clicks"),
     State("country-dropdown", "value"),
@@ -308,7 +306,7 @@ def download_excel(n_clicks, country, ip, component, region):
     from excel_exporter import build_excel_export
     return build_excel_export(n_clicks, region, country, ip, component)
 
-@app.callback(
+@dash_app.callback(
     Output('page-content', 'children'),
     Input('url', 'pathname'),
     State('url', 'search')
@@ -322,7 +320,7 @@ def display_page(pathname, search):
         return layout_detailed()
     return layout_overview()
 
-@app.callback(
+@dash_app.callback(
     Output('overview-chart', 'figure'),
     [Input('overview-region-dropdown', 'value'),
      Input('toggle-custom-wptm', 'value'),
@@ -332,10 +330,10 @@ def update_overview_chart(region, custom_wptm, percent):
     from overview_chart_builder import build_overview_chart
     inc_custom = bool(custom_wptm and "include" in custom_wptm)
     is_percent = bool(percent and "percent" in percent)
-    fig, style = build_overview_chart(app, region, inc_custom, is_percent)
+    fig, style = build_overview_chart(dash_app, region, inc_custom, is_percent)
     return fig
 
-@app.callback(
+@dash_app.callback(
     Output('url', 'search'),
     Output('url', 'pathname'),
     Input('overview-chart', 'clickData'),
@@ -358,5 +356,5 @@ def navigate_to_detailed(clickData):
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 8000))
-    app.run(debug=True, host='0.0.0.0', port=port)
+    dash_app.run(debug=True, host='0.0.0.0', port=port)
 
