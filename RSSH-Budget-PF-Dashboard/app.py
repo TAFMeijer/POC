@@ -5,7 +5,7 @@ import json
 import urllib.parse
 
 from data_processing import df_b, df_i, df_w, COMP_COLORS, SHADES, TYPE_TO_WEIGHT, indicator_order, available_regions, country_to_shortname
-dash_app = dash.Dash(__name__, url_base_pathname='/budget-pf-poc/', external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
+dash_app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], suppress_callback_exceptions=True)
 
 # Expose the standard Flask server for Gunicorn / WSGI deployments (e.g., Hugging Face)
 app = dash_app.server
