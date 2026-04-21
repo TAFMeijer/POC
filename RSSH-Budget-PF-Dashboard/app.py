@@ -109,10 +109,10 @@ def layout_detailed(country='Benin'):
                 )
             ], width=2),
             dbc.Col([
-                dbc.Label("Select Implementation Period", style={'fontSize': '14px'}),
+                dbc.Label("Select Grant", style={'fontSize': '14px'}),
                 dcc.Dropdown(
                     id='ip-dropdown',
-                    options=[{'label': 'All Implementation Periods', 'value': 'ALL'}] + [{'label': ip, 'value': ip} for ip in ips],
+                    options=[{'label': 'All Grants', 'value': 'ALL'}] + [{'label': ip, 'value': ip} for ip in ips],
                     value=ip_val
                 )
             ], width=3),
@@ -166,7 +166,7 @@ def update_ip_dropdown(country):
         ips = df_b['Implementation Period Name'].dropna().unique()
     else:
         ips = df_b[df_b['Country'] == country]['Implementation Period Name'].dropna().unique()
-    opts = [{'label': 'All Implementation Periods', 'value': 'ALL'}] + [{'label': ip, 'value': ip} for ip in ips]
+    opts = [{'label': 'All Grants', 'value': 'ALL'}] + [{'label': ip, 'value': ip} for ip in ips]
     val = 'ALL'
     return opts, val
 
@@ -293,7 +293,7 @@ def display_hover(hoverData):
         
     elif type_ == 'WPTM':
         data = obj.get('data', [])
-        rows = [html.Tr([html.Th("Implementation Period", style=style_th_no_wrap), html.Th("Key Activity", style=style_th)])]
+        rows = [html.Tr([html.Th("Grant", style=style_th_no_wrap), html.Th("Key Activity", style=style_th)])]
         for d in data:
             rows.append(html.Tr([html.Td(d['ip'], style=style_no_wrap), html.Td(d['act'], style=style_td)]))
         return True, bbox, html.Div([
