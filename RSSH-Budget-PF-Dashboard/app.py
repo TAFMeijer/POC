@@ -180,11 +180,21 @@ def update_ip_dropdown(country):
      Input('region-dropdown', 'value')]
 )
 def update_chart(country, ip, component, region):
-    from chart_builder import build_main_chart
-    fig, style = build_main_chart(dash_app, region, country, ip, component)
-    if component == 'ALL':
-        cname = "modebar-horizontal-single"
-    return fig, style, cname
+    try:
+        from chart_builder import build_main_chart
+        fig, style = build_main_chart(dash_app, region, country, ip, component)
+        if component == 'ALL':
+            cname = "modebar-vertical-all"
+        else:
+            cname = "modebar-horizontal-single"
+        return fig, style, cname
+    except Exception as e:
+        import traceback
+        import plotly.graph_objects as go
+        err_text = f"CRASH: {str(e)}<br>{traceback.format_exc()}"
+        fig = go.Figure()
+        fig.update_layout(title=dict(text=err_text[:450], font=dict(color='red', size=10)))
+        return fig, {'height': '850px'}, ''
 
 @dash_app.callback(
     Output("graph-tooltip", "show"),
