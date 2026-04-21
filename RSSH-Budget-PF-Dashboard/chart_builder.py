@@ -390,7 +390,7 @@ def build_main_chart(app, region, country, ip, component):
         barmode='stack',
         bargap=0.3,
         margin=dict(l=450, r=margin_r, t=40, b=20),
-        yaxis=dict(autorange="reversed", ticklabelstandoff=4, dtick=1, tickfont=dict(size=13)), # Show sorted top to bottom, offset text visually, force ALL tickets to render even if squished
+        yaxis=dict(autorange="reversed", dtick=1, tickfont=dict(size=13)), # Show sorted top to bottom, force ALL tickets to render even if squished
         legend=dict(
             title=dict(text="Indicator legend"),
             yanchor=leg_yanchor,
