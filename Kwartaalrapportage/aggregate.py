@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+from datetime import datetime
 
 cwd = '/Users/tommeijer/Git/Kwartaalrapportage'
 intercompany_path = os.path.join(cwd, 'Intercompany.xlsx')
@@ -29,6 +30,29 @@ veh_row = ic_df[ic_df['Entity'].str.contains('Vehicles', na=False, case=False)]
 ic_veh_total = veh_row['totaal'].sum() if not veh_row.empty else 0
 ic_veh_huidig = veh_row['2026 huidig kwartaal'].sum() if not veh_row.empty else 0
 
+print("Loading mapping.xlsx...")
+map_df = pd.read_excel(mapping_path, header=1)
+map_df.columns = [str(c).strip() for c in map_df.columns]
+map_df['Rekening_Clean'] = map_df['Rekening'].apply(clean_rekening).astype('Int64')
+
+def map_entity(org):
+    org = str(org).lower()
+    if 'group' in org: return 'Group'
+    if 'mobility' in org: return 'Mobility'
+    if 'tech' in org: return 'Tech'
+    if 'vehicles' in org: return 'Vehicles'
+    return 'Unknown'
+    
+map_df['Organisatie_Clean'] = map_df['Organisatie'].apply(map_entity)
+
+if 'Inverse' not in map_df.columns:
+    map_df['Inverse'] = False
+else:
+    # Ensure boolean parsing mapping True/False
+    map_df['Inverse'] = map_df['Inverse'].fillna(False).astype(bool)
+
+map_df_clean = map_df[['Organisatie_Clean', 'Rekening_Clean', 'Mapping', 'Inverse']].dropna(subset=['Rekening_Clean'])
+
 def process_entity(file_path, entity_name, target_col):
     print(f"Processing {entity_name}...")
     df = pd.read_excel(file_path, header=5)
@@ -45,6 +69,15 @@ def process_entity(file_path, entity_name, target_col):
     
     df['Eindsaldo'] = pd.to_numeric(df[target_col], errors='coerce').fillna(0.0)
     
+    # Early Merge for logic execution
+    entity_map = map_df_clean[map_df_clean['Organisatie_Clean'] == entity_name]
+    df = pd.merge(df, entity_map[['Rekening_Clean', 'Mapping', 'Inverse']], on='Rekening_Clean', how='left')
+    
+    # Invert balance before any calculation, handling missing Inverse as False
+    df['Inverse'] = df['Inverse'].fillna(False).astype(bool)
+    inverse_mask = df['Inverse'] == True
+    df.loc[inverse_mask, 'Eindsaldo'] = df.loc[inverse_mask, 'Eindsaldo'] * -1
+
     # Zero out
     zero_out_texts = ['R/c OOY Group Holding', 'R/c OOY TECH', 'R/c OOY Mobility', 'R/c OOY Vehicies']
     mask = df['Omschrijving'].astype(str).apply(lambda x: any(t.lower() in x.lower() for t in zero_out_texts))
@@ -62,7 +95,7 @@ def process_entity(file_path, entity_name, target_col):
         df.loc[df['Rekening_Clean'] == 132000, 'Eindsaldo'] -= ic_veh_total
 
     df['Organisatie'] = entity_name
-    return df[['Organisatie', 'Rekening', 'Rekening_Clean', 'Soort', 'Omschrijving', 'Eindsaldo']]
+    return df[['Organisatie', 'Rekening', 'Rekening_Clean', 'Soort', 'Omschrijving', 'Eindsaldo', 'Mapping']]
 
 dfs = []
 dfs.append(process_entity(os.path.join(cwd, 'VISMA', 'Q1 2026 Group.xlsx'), 'Group', 'Correctie Eindsaldo'))
@@ -70,33 +103,7 @@ dfs.append(process_entity(os.path.join(cwd, 'VISMA', 'Q1 2026 Mobility.xlsx'), '
 dfs.append(process_entity(os.path.join(cwd, 'VISMA', 'Q1 2026 Tech.xlsx'), 'Tech', 'Eindsaldo'))
 dfs.append(process_entity(os.path.join(cwd, 'VISMA', 'Q1 2026 Vehicles.xlsx'), 'Vehicles', 'Eindsaldo'))
 
-all_data = pd.concat(dfs, ignore_index=True)
-
-print("Loading mapping.xlsx...")
-map_df = pd.read_excel(mapping_path, header=1)
-map_df.columns = [str(c).strip() for c in map_df.columns]
-map_df['Rekening_Clean'] = map_df['Rekening'].apply(clean_rekening).astype('Int64')
-
-def map_entity(org):
-    org = str(org).lower()
-    if 'group' in org: return 'Group'
-    if 'mobility' in org: return 'Mobility'
-    if 'tech' in org: return 'Tech'
-    if 'vehicles' in org: return 'Vehicles'
-    return 'Unknown'
-    
-map_df['Organisatie_Clean'] = map_df['Organisatie'].apply(map_entity)
-
-# Keep only relevant columns to avoid conflicts if others overlap
-map_df_clean = map_df[['Organisatie_Clean', 'Rekening_Clean', 'Mapping']].dropna(subset=['Rekening_Clean'])
-
-print("Merging data...")
-merged = pd.merge(all_data, map_df_clean, 
-                  left_on=['Organisatie', 'Rekening_Clean'], 
-                  right_on=['Organisatie_Clean', 'Rekening_Clean'], 
-                  how='left')
-
-merged = merged.drop(columns=['Organisatie_Clean'])
+merged = pd.concat(dfs, ignore_index=True)
 
 unmapped = merged[(merged['Mapping'].isna()) & (merged['Eindsaldo'] != 0.0)]
 if not unmapped.empty:
@@ -109,7 +116,8 @@ for c in expected_cols:
         summary[c] = 0.0
 summary = summary.reindex(columns=expected_cols)
 
-out_file = os.path.join(cwd, 'Aggregation_Results.xlsx')
+timestamp = datetime.now().strftime('[%d-%b-%y %H %M]')
+out_file = os.path.join(cwd, f'Aggregation_Results {timestamp}.xlsx')
 print(f"Exporting results to {out_file}...")
 with pd.ExcelWriter(out_file) as writer:
     summary.to_excel(writer, sheet_name='Summary')
