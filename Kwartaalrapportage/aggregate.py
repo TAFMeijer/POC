@@ -69,6 +69,18 @@ def process_entity(file_path, entity_name, target_col):
     
     df['Eindsaldo'] = pd.to_numeric(df[target_col], errors='coerce').fillna(0.0)
     
+    if 'Correctie' in target_col:
+        debet_col = 'Correctie Debet'
+        credit_col = 'Correctie Credit'
+    else:
+        debet_col = 'Debet'
+        credit_col = 'Credit'
+        
+    if debet_col not in df.columns: debet_col = 'Debet'
+    if credit_col not in df.columns: credit_col = 'Credit'
+    
+    df['Movement'] = (-1 * pd.to_numeric(df[debet_col], errors='coerce').fillna(0.0)) + pd.to_numeric(df[credit_col], errors='coerce').fillna(0.0)
+
     # Early Merge for logic execution
     entity_map = map_df_clean[map_df_clean['Organisatie_Clean'] == entity_name]
     df = pd.merge(df, entity_map[['Rekening_Clean', 'Mapping', 'Inverse']], on='Rekening_Clean', how='left')
@@ -95,7 +107,7 @@ def process_entity(file_path, entity_name, target_col):
         df.loc[df['Rekening_Clean'] == 132000, 'Eindsaldo'] -= ic_veh_total
 
     df['Organisatie'] = entity_name
-    return df[['Organisatie', 'Rekening', 'Rekening_Clean', 'Soort', 'Omschrijving', 'Eindsaldo', 'Mapping']]
+    return df[['Organisatie', 'Rekening', 'Rekening_Clean', 'Soort', 'Omschrijving', 'Eindsaldo', 'Mapping', 'Movement']]
 
 dfs = []
 dfs.append(process_entity(os.path.join(cwd, 'VISMA', 'Q1 2026 Group.xlsx'), 'Group', 'Correctie Eindsaldo'))
@@ -115,6 +127,50 @@ for c in expected_cols:
     if c not in summary.columns:
         summary[c] = 0.0
 summary = summary.reindex(columns=expected_cols)
+
+# Calculate Movement for additional rows
+af_rekening = [25010, 25210, 25310, 26010]
+rl_rekening = [82012, 86000, 83000, 82000]
+
+af_sum = merged[merged['Rekening_Clean'].isin(af_rekening)].groupby('Organisatie')['Movement'].sum()
+rl_sum = merged[merged['Rekening_Clean'].isin(rl_rekening)].groupby('Organisatie')['Movement'].sum()
+
+summary.loc['Afschrijvingen'] = [af_sum.get(c, 0.0) for c in expected_cols]
+summary.loc['Rente lening'] = [rl_sum.get(c, 0.0) for c in expected_cols]
+
+cat_mapping = {
+    'Omzet': 'Omzet',
+    'directe kosten': 'Directe kosten',
+    'Verkoop- en algemene kosten': 'Verkoop-en algemente kosten',
+    'Financiele baten (lasten)': 'financiele baten (lasten)',
+    'Vaste activa': 'Vaste activa',
+    'Vlottende activa': 'vlottende activa',
+    'Liquide middelen': 'liquide middelen',
+    'Eigen vermogen': 'eigen vermogen',
+    'Lange schulden': 'lange schulden',
+    'Korte schulden': 'korte schulden',
+    'Afschrijvingen': 'Afschrijvingen',
+    'Rente lening': 'Rente lening'
+}
+
+order = [
+    'Omzet', 
+    'Directe kosten', 
+    'Verkoop-en algemente kosten', 
+    'Afschrijvingen', 
+    'Rente lening', 
+    'financiele baten (lasten)', 
+    'Vaste activa', 
+    'vlottende activa', 
+    'liquide middelen', 
+    'eigen vermogen', 
+    'lange schulden', 
+    'korte schulden'
+]
+
+summary = summary.rename(index=cat_mapping)
+# Drop anything not in `order` and maintain strict order
+summary = summary.reindex(order).fillna(0.0)
 
 timestamp = datetime.now().strftime('[%d-%b-%y %H %M]')
 out_file = os.path.join(cwd, f'Aggregation_Results {timestamp}.xlsx')
