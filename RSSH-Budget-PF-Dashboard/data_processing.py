@@ -54,6 +54,7 @@ COMP_COLORS = {
     'Tuberculosis': '#2e4df9',
     'Malaria': '#fad90d',
     'Multi-Component': '#8c564b', # brown as default
+    'Payment for Results': '#8c564b', # brown
     'Program Management': '#000000', # black
     'Spacer': 'rgba(0,0,0,0)',
     'Other': '#7f7f7f'
@@ -107,6 +108,10 @@ df_b.loc[df_b['Module'] == 'Program management', 'Module Parent Component'] = 'P
 df_i.loc[df_i['Module'] == 'Program management', 'Module Parent Component'] = 'Program Management'
 df_w.loc[df_w['Module'] == 'Program management', 'Module Parent Component'] = 'Program Management'
 
+df_b.loc[df_b['Module'] == 'Payment for results', 'Module Parent Component'] = 'Payment for Results'
+df_i.loc[df_i['Module'] == 'Payment for results', 'Module Parent Component'] = 'Payment for Results'
+df_w.loc[df_w['Module'] == 'Payment for results', 'Module Parent Component'] = 'Payment for Results'
+
 SHADES = {
     'RSSH': {'light': '#C79CEC', 'medium': '#8B31D8', 'dark': '#481573'},
     'HIV/AIDS': {'light': '#f56d8a', 'medium': '#ee0c3d', 'dark': '#a6082a'},
@@ -116,6 +121,7 @@ SHADES = {
     'Other': {'light': '#c7c7c7', 'medium': '#7f7f7f', 'dark': '#4d4d4d'},
     'Custom': {'light': '#d9d9d9', 'medium': '#969696', 'dark': '#525252'},
     'Program Management': {'light': '#737373', 'medium': '#252525', 'dark': '#000000'},
+    'Payment for Results': {'light': '#c49c94', 'medium': '#8c564b', 'dark': '#593c31'},
     'Spacer': {'light': 'rgba(0,0,0,0)', 'medium': 'rgba(0,0,0,0)', 'dark': 'rgba(0,0,0,0)'}
 }
 
@@ -124,4 +130,50 @@ TYPE_TO_WEIGHT = {
     'Outcome indicator': 'medium',
     'Coverage indicator': 'dark'
 }
+
+
+def filter_data(region=None, country=None, ip=None, component=None):
+    """Central filter applied identically by chart_builder, excel_exporter, and overview_chart_builder."""
+    b = df_b.copy()
+    i = df_i.copy()
+    w = df_w.copy()
+
+    if country and country != 'ALL':
+        b = b[b['Country'] == country]
+        i = i[i['Country'] == country]
+        w = w[w['Country'] == country]
+    elif region and region != 'ALL':
+        b = b[b['Country'].map(country_to_region) == region]
+        i = i[i['Country'].map(country_to_region) == region]
+        w = w[w['Country'].map(country_to_region) == region]
+
+    if ip and ip != 'ALL':
+        b = b[b['Implementation Period Name'] == ip]
+        i = i[i['Implementation Period Name'] == ip]
+        w = w[w['Implementation Period Name'] == ip]
+
+    if component and component != 'ALL':
+        b = b[b['Module Parent Component'] == component]
+        i = i[i['Module Parent Component'] == component]
+        w = w[w['Module Parent Component'] == component]
+
+    return b, i, w
+
+
+def reassign_tb_hiv(b_filt, i_filt, countries=None):
+    """Reassign TB/HIV I-1 indicator to the disease component with the larger budget."""
+    mask = i_filt['IndicatorCode'] == 'TB/HIV I-1'
+    if not mask.any():
+        return i_filt
+    i_filt = i_filt.copy()
+    target = countries if countries is not None else i_filt.loc[mask, 'Country'].unique()
+    for c in target:
+        c_mask = mask & (i_filt['Country'] == c)
+        if not c_mask.any():
+            continue
+        hiv = b_filt[(b_filt['Country'] == c) & (b_filt['Module Parent Component'] == 'HIV/AIDS')]['Total Amount'].sum()
+        tb = b_filt[(b_filt['Country'] == c) & (b_filt['Module Parent Component'] == 'Tuberculosis')]['Total Amount'].sum()
+        winner = 'HIV/AIDS' if hiv > tb else 'Tuberculosis'
+        i_filt.loc[c_mask, 'Module Parent Component'] = winner
+    return i_filt
 

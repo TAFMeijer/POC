@@ -19,7 +19,7 @@ Because this application is built on top of **Plotly Dash** (which encapsulates 
 In your Azure App Service configuration panel, under **Configuration -> General Settings**, set the **Startup Command** exactly to:
 
 ```bash
-gunicorn --bind=0.0.0.0 --timeout 600 app:server
+gunicorn --bind=0.0.0.0 --timeout 600 app:app
 ```
 
-> **Why this matters:** Azure usually natively hooks into a default initialization endpoint called `app:app`, but Dash runs inherently through an isolated `app.server` boundary logic to manage the react routing map dynamically. Our code natively exposes this to Azure via `server = app.server`!
+> **Why this matters:** Azure usually natively hooks into a default initialization endpoint called `app:app`, but Dash runs inherently through an isolated `app.server` boundary logic to manage the react routing map dynamically. Our code natively exposes this to Azure via `app = dash_app.server`, so gunicorn must target `app:app`!

@@ -23,3 +23,9 @@ nohup.out
 .vscode/
 *.swp
 *.swo
+
+# Debug artifacts
+test_stack.html
+
+# AI tools
+.gemini/
