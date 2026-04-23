@@ -70,12 +70,17 @@ def _build_y_labels(target_countries):
     return y_labels, raw
 
 
-def _add_total_label_trace(fig, y_vals, base_vals, is_percent, col, row=1):
+def _add_total_label_trace(fig, y_vals, base_vals, is_percent, col, row=1, is_currency=False):
     """Add a transparent bar that renders the total label outside the stack."""
     text = []
     for v in base_vals:
         if v > 0:
-            text.append(f" {v:.0f}%" if is_percent else f" {v:,.1f}" if isinstance(v, float) else f" {v}")
+            if is_percent:
+                text.append(f" {v:.0f}%")
+            elif is_currency:
+                text.append(f" {v:,.1f}")
+            else:
+                text.append(f" {int(v)}")
         else:
             text.append("")
     fig.add_trace(go.Bar(
@@ -217,7 +222,7 @@ def build_merged_chart(app, region, inc_custom=False, is_percent=False,
     # Total label (absolute mode only)
     if not is_percent:
         base = [totals_b[c] / 1e6 for c in target_countries]
-        _add_total_label_trace(fig, y_countries, base, False, col=1)
+        _add_total_label_trace(fig, y_countries, base, False, col=1, is_currency=True)
 
     # --- CHART 2: Indicators ---
     tot_x_ind = [0.0] * len(target_countries)
