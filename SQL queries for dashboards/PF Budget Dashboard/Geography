@@ -1,4 +1,0 @@
-SELECT TOP (1000) [Geography Name]
-      ,[NewRegioShort]
-      ,[Country short name]
-  FROM [dbo].[Geography Lookup]
