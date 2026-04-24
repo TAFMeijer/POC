@@ -148,63 +148,79 @@ def build_main_chart(app, region, country, ip, component, exclude_c19rm=False):
     tot_x_ind = [0] * len(y_vals)
     for ind_type in ['Coverage indicator', 'Outcome indicator', 'Impact indicator']:
         for is_custom in [False, True]:
-            sub = i_filt[(i_filt['IndicatorType'] == ind_type) & (i_filt['IsCustom'] == is_custom)]
-            counts, bar_colors, custom_data_i = [], [], []
-
-            for i, y_m in enumerate(y_vals):
-                mod_sub = sub[sub['Module'] == y_m]
-                c = len(mod_sub)
-                counts.append(c)
-                tot_x_ind[i] += c
-
-                pc = module_to_pc.get(y_m, 'Other')
-                weight = TYPE_TO_WEIGHT.get(ind_type, 'medium')
-                bar_colors.append(SHADES.get(pc, SHADES['Other'])[weight])
-
-                if c > 0:
-                    mod_sub = mod_sub.copy()
-                    mod_sub['__sort_code'] = mod_sub['IndicatorCode'].fillna(mod_sub['IndicatorCustomName'])
-                    mod_sub['__sort_order'] = mod_sub['__sort_code'].map(indicator_order).fillna(99999)
-                    mod_sub.sort_values(by=['__sort_order', '__sort_code', 'Implementation Period Name'], inplace=True)
-
-                    if is_custom:
-                        grouped = (mod_sub.groupby(['IndicatorCustomName', '__sort_order', '__sort_code', 'Source'], dropna=False)
-                                   .size().reset_index(name='count'))
-                        grouped.sort_values(by=['count', '__sort_order', '__sort_code'],
-                                            ascending=[False, True, True], inplace=True)
-                        data = [{'name': str(r['IndicatorCustomName']) if str(r['IndicatorCustomName']) != 'nan' else 'Unknown',
-                                 'source': str(r['Source']) if str(r['Source']) != 'nan' else '',
-                                 'count': int(r['count'])} for _, r in grouped.iterrows()]
-                        custom_data_i.append([json.dumps({'type': 'INDICATOR_CUSTOM', 'title': f"{ind_type} (Custom)", 'data': data})])
-                    else:
-                        grouped = (mod_sub.groupby(['IndicatorCode', 'IndicatorDescription', '__sort_order', '__sort_code', 'Source'], dropna=False)
-                                   .size().reset_index(name='count'))
-                        grouped.sort_values(by=['count', '__sort_order', '__sort_code'],
-                                            ascending=[False, True, True], inplace=True)
-                        data = [{'code': '' if str(r['IndicatorCode']) == 'nan' else str(r['IndicatorCode']),
-                                 'desc': '' if str(r['IndicatorDescription']) == 'nan' else str(r['IndicatorDescription']),
-                                 'source': str(r['Source']) if str(r['Source']) != 'nan' else '',
-                                 'count': int(r['count'])} for _, r in grouped.iterrows()]
-                        custom_data_i.append([json.dumps({'type': 'INDICATOR_STANDARD', 'title': f"{ind_type} (Standard)", 'data': data})])
+            c19_loop = [False, True] if (not is_custom and ind_type == 'Coverage indicator') else [False]
+            for is_c19 in c19_loop:
+                if is_c19:
+                    sub = i_filt[(i_filt['IndicatorType'] == ind_type) & (i_filt['IsCustom'] == is_custom) & (i_filt['Source'].astype(str).str.contains('C19RM', case=False, na=False))]
                 else:
-                    custom_data_i.append([json.dumps({'type': 'EMPTY'})])
+                    if len(c19_loop) == 2:
+                        sub = i_filt[(i_filt['IndicatorType'] == ind_type) & (i_filt['IsCustom'] == is_custom) & (~i_filt['Source'].astype(str).str.contains('C19RM', case=False, na=False))]
+                    else:
+                        sub = i_filt[(i_filt['IndicatorType'] == ind_type) & (i_filt['IsCustom'] == is_custom)]
+                
+                counts, bar_colors, custom_data_i = [], [], []
 
-            if sum(counts) > 0:
-                trace_args = dict(
-                    y=y_vals, x=counts, orientation='h',
-                    name=f"{ind_type} ({'Custom' if is_custom else 'Standard'})",
-                    marker_color=bar_colors,
-                    text=[str(c) if c > 0 else "" for c in counts],
-                    textposition='inside', insidetextanchor='middle',
-                    textangle=0, constraintext='none',
-                    showlegend=False, customdata=custom_data_i, hoverinfo='none'
-                )
-                if is_custom:
-                    trace_args['marker_color'] = "#ececec"
-                    trace_args['marker_pattern_shape'] = "/"
-                    trace_args['marker_pattern_size'] = 3
-                    trace_args['marker_pattern_fgcolor'] = bar_colors
-                fig.add_trace(go.Bar(**trace_args), row=1, col=2)
+                for i, y_m in enumerate(y_vals):
+                    mod_sub = sub[sub['Module'] == y_m]
+                    c = len(mod_sub)
+                    counts.append(c)
+                    tot_x_ind[i] += c
+
+                    pc = module_to_pc.get(y_m, 'Other')
+                    weight = TYPE_TO_WEIGHT.get(ind_type, 'medium')
+                    if is_c19:
+                        bar_colors.append(SHADES['RSSH'][weight])
+                    else:
+                        bar_colors.append(SHADES.get(pc, SHADES['Other'])[weight])
+
+                    if c > 0:
+                        mod_sub = mod_sub.copy()
+                        mod_sub['__sort_code'] = mod_sub['IndicatorCode'].fillna(mod_sub['IndicatorCustomName'])
+                        mod_sub['__sort_order'] = mod_sub['__sort_code'].map(indicator_order).fillna(99999)
+                        mod_sub.sort_values(by=['__sort_order', '__sort_code', 'Implementation Period Name'], inplace=True)
+
+                        if is_custom:
+                            grouped = (mod_sub.groupby(['IndicatorCustomName', '__sort_order', '__sort_code', 'Source'], dropna=False)
+                                       .size().reset_index(name='count'))
+                            grouped.sort_values(by=['count', '__sort_order', '__sort_code'],
+                                                ascending=[False, True, True], inplace=True)
+                            data = [{'name': str(r['IndicatorCustomName']) if str(r['IndicatorCustomName']) != 'nan' else 'Unknown',
+                                     'source': str(r['Source']) if str(r['Source']) != 'nan' else '',
+                                     'count': int(r['count'])} for _, r in grouped.iterrows()]
+                            custom_data_i.append([json.dumps({'type': 'INDICATOR_CUSTOM', 'title': f"{ind_type} (Custom)", 'data': data})])
+                        else:
+                            grouped = (mod_sub.groupby(['IndicatorCode', 'IndicatorDescription', '__sort_order', '__sort_code', 'Source'], dropna=False)
+                                       .size().reset_index(name='count'))
+                            grouped.sort_values(by=['count', '__sort_order', '__sort_code'],
+                                                ascending=[False, True, True], inplace=True)
+                            data = [{'code': '' if str(r['IndicatorCode']) == 'nan' else str(r['IndicatorCode']),
+                                     'desc': '' if str(r['IndicatorDescription']) == 'nan' else str(r['IndicatorDescription']),
+                                     'source': str(r['Source']) if str(r['Source']) != 'nan' else '',
+                                     'count': int(r['count'])} for _, r in grouped.iterrows()]
+                            custom_data_i.append([json.dumps({'type': 'INDICATOR_STANDARD', 'title': f"{ind_type} (Standard{' - C19RM' if is_c19 else ''})", 'data': data})])
+                    else:
+                        custom_data_i.append([json.dumps({'type': 'EMPTY'})])
+
+                if sum(counts) > 0:
+                    trace_args = dict(
+                        y=y_vals, x=counts, orientation='h',
+                        name=f"{ind_type} ({'Custom' if is_custom else 'Standard'}{' - C19RM' if is_c19 else ''})",
+                        marker_color=bar_colors,
+                        text=[str(c) if c > 0 else "" for c in counts],
+                        textposition='inside', insidetextanchor='middle',
+                        textangle=0, constraintext='none',
+                        showlegend=False, customdata=custom_data_i, hoverinfo='none'
+                    )
+                    if is_custom:
+                        trace_args['marker_color'] = "#ececec"
+                        trace_args['marker_pattern_shape'] = "/"
+                        trace_args['marker_pattern_size'] = 3
+                        trace_args['marker_pattern_fgcolor'] = bar_colors
+                    elif is_c19:
+                        trace_args['marker_pattern_shape'] = "."
+                        trace_args['marker_pattern_size'] = 3
+                        trace_args['marker_pattern_fgcolor'] = "white"
+                    fig.add_trace(go.Bar(**trace_args), row=1, col=2)
 
     # Indicator total labels
     fig.add_trace(go.Bar(
@@ -233,6 +249,16 @@ def build_main_chart(app, region, country, ip, component, exclude_c19rm=False):
                 trace_args['marker_pattern_size'] = 3
                 trace_args['marker_pattern_fgcolor'] = col
             fig.add_trace(go.Bar(**trace_args), row=1, col=2)
+
+            if not is_custom and ind_type == 'Coverage indicator' and not exclude_c19rm:
+                c19_col = SHADES['RSSH'][weight]
+                fig.add_trace(go.Bar(
+                    y=dummy_y, x=[None],
+                    name='Coverage indicator (Standard - C19RM)',
+                    marker_color=c19_col, marker_pattern_shape=".",
+                    marker_pattern_size=3, marker_pattern_fgcolor="white",
+                    showlegend=True, hoverinfo='none'
+                ), row=1, col=2)
 
     # ── Chart 3: WPTM ─────────────────────────────────────────────────────
     wptm_counts, wptm_colors, custom_data_w = [], [], []
