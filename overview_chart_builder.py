@@ -341,6 +341,39 @@ def build_merged_chart(app, region, inc_custom=False, is_percent=False,
         if not is_percent:
             _add_total_label_trace(fig, y_countries, tot_x_wptm, False, col=3)
 
+    # --- Indicator Pattern Legend (dummy traces) ---
+    col = SHADES['Other']['medium']
+    
+    fig.add_trace(go.Bar(
+        y=[None], x=[None], name='Standard Indicator',
+        marker_color=col, marker_pattern_fgcolor="white",
+        showlegend=True, hoverinfo='none'
+    ), row=1, col=2)
+    
+    if inc_custom:
+        fig.add_trace(go.Bar(
+            y=[None], x=[None], name='Custom Indicator',
+            marker_color="#ececec", marker_pattern_fgcolor=col,
+            marker_pattern_shape="/", marker_pattern_size=3,
+            showlegend=True, hoverinfo='none'
+        ), row=1, col=2)
+        
+    if not exclude_c19rm:
+        fig.add_trace(go.Bar(
+            y=[None], x=[None], name='C19RM Indicator',
+            marker_color=SHADES['RSSH']['medium'], marker_pattern_fgcolor="white",
+            marker_pattern_shape=".", marker_pattern_size=3,
+            showlegend=True, hoverinfo='none'
+        ), row=1, col=2)
+        
+        if inc_custom:
+            fig.add_trace(go.Bar(
+                y=[None], x=[None], name='Custom C19RM Indicator',
+                marker_color="#ececec", marker_pattern_fgcolor=SHADES['RSSH']['medium'],
+                marker_pattern_shape="x", marker_pattern_size=3,
+                showlegend=True, hoverinfo='none'
+            ), row=1, col=2)
+
     # --- Layout ---
     margin_r = 180 if inc_custom else 20
     calculated_height = max(800, len(target_countries) * 55 + 100)
@@ -350,7 +383,7 @@ def build_merged_chart(app, region, inc_custom=False, is_percent=False,
             trace.customdata = raw_countries
 
     _finalize_layout(fig, y_countries, calculated_height, inc_custom,
-                     "Budget Components", margin_r=margin_r,
+                     "Legend", margin_r=margin_r,
                      leg_y=1.0, leg_x=1.02, leg_yanchor='top', leg_xanchor='left')
     _apply_axis_padding(fig, is_percent, totals_b, totals_i, inc_custom)
 
