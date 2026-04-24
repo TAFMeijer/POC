@@ -730,7 +730,7 @@ def build_unmerged_chart(app, region, inc_custom=False, is_percent=False,
     overall_max = max(max_w, max_i)
     max_x_axis = 105.0 if is_percent else overall_max * 1.15
 
-    leg_y, leg_x = 0.98, 0.98
+    leg_y, leg_x = 1.015, 0.98
     leg_yanchor, leg_xanchor = "top", "right"
     margin_r = 20
     if overall_max > 0 and inc_custom and wptm_counts:
